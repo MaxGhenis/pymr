@@ -259,3 +259,153 @@ def simple_mode(
         "OR_uci": float(np.exp(beta + 1.96 * se)),
         "nsnp": len(beta_exp),
     }
+
+
+def mr_presso(
+    beta_exp: NDArray[np.floating[Any]],
+    se_exp: NDArray[np.floating[Any]],
+    beta_out: NDArray[np.floating[Any]],
+    se_out: NDArray[np.floating[Any]],
+    n_simulations: int = 10000,
+    outlier_test: bool = True,
+    distortion_test: bool = True,
+) -> dict[str, Any]:
+    """MR-PRESSO (Pleiotropy RESidual Sum and Outlier).
+
+    Detects and corrects for horizontal pleiotropy via:
+    1. Global test: Tests for presence of pleiotropy
+    2. Outlier test: Identifies SNPs with significant residuals
+    3. Distortion test: Tests if removing outliers changes estimate
+
+    Args:
+        beta_exp: Effect sizes for exposure (per allele)
+        se_exp: Standard errors for exposure
+        beta_out: Effect sizes for outcome (per allele)
+        se_out: Standard errors for outcome
+        n_simulations: Number of simulations for global test
+        outlier_test: Whether to perform outlier detection
+        distortion_test: Whether to test for distortion
+
+    Returns:
+        Dictionary with:
+            - global_test_pval: p-value for presence of horizontal pleiotropy
+            - outlier_indices: list of detected outlier indices
+            - corrected_beta: IVW estimate after outlier removal
+            - corrected_se: SE after outlier removal
+            - corrected_pval: p-value after outlier removal
+            - distortion_test_pval: p-value for significant difference
+            - original_beta: Original IVW estimate
+            - original_se: Original IVW SE
+            - nsnp: Number of SNPs
+
+    Raises:
+        ValueError: If fewer than 3 SNPs provided
+
+    References:
+        Verbanck et al. (2018) Nature Genetics 50:693-698
+    """
+    if len(beta_exp) < 3:
+        msg = "MR-PRESSO requires at least 3 SNPs"
+        raise ValueError(msg)
+
+    # Get original IVW estimate
+    original_ivw = ivw(beta_exp, se_exp, beta_out, se_out)
+    original_beta = original_ivw["beta"]
+    original_se = original_ivw["se"]
+
+    # Compute observed residual sum of squares
+    wald_ratio = beta_out / beta_exp
+    wald_se = np.abs(se_out / beta_exp)
+    weights = 1 / wald_se**2
+
+    residuals = wald_ratio - original_beta
+    rss_obs = np.sum((residuals**2) * weights)
+
+    # Global test: Simulate null distribution
+    # Use legacy RandomState for reproducibility with np.random.seed()
+    rng = np.random.RandomState()
+    rss_null = np.zeros(n_simulations)
+
+    for i in range(n_simulations):
+        # Simulate under null (no pleiotropy)
+        sim_wald = rng.normal(original_beta, wald_se)
+        sim_residuals = sim_wald - original_beta
+        rss_null[i] = np.sum((sim_residuals**2) * weights)
+
+    # Global test p-value
+    global_test_pval = float(np.mean(rss_null >= rss_obs))
+
+    # Outlier test
+    outlier_indices: list[int] = []
+    if outlier_test:
+        # Compute residuals and test each SNP
+        for idx in range(len(beta_exp)):
+            # Compute RSS without this SNP
+            mask = np.ones(len(beta_exp), dtype=bool)
+            mask[idx] = False
+
+            # IVW without this SNP
+            ivw_loo = ivw(
+                beta_exp[mask],
+                se_exp[mask],
+                beta_out[mask],
+                se_out[mask]
+            )
+            beta_loo = ivw_loo["beta"]
+
+            # Residual for this SNP
+            residual_i = wald_ratio[idx] - beta_loo
+
+            # Simulate null distribution for this SNP's residual
+            rss_null_i = np.zeros(n_simulations)
+            for sim_idx in range(n_simulations):
+                sim_wald_i = rng.normal(beta_loo, wald_se[idx])
+                sim_residual_i = sim_wald_i - beta_loo
+                rss_null_i[sim_idx] = (sim_residual_i**2) * weights[idx]
+
+            # Test if observed residual is extreme
+            pval_i = np.mean(rss_null_i >= (residual_i**2) * weights[idx])
+
+            # Bonferroni correction
+            if pval_i < (0.05 / len(beta_exp)):
+                outlier_indices.append(idx)
+
+    # Corrected estimate (after outlier removal)
+    if len(outlier_indices) > 0:
+        keep_mask = np.ones(len(beta_exp), dtype=bool)
+        keep_mask[outlier_indices] = False
+
+        corrected_ivw = ivw(
+            beta_exp[keep_mask],
+            se_exp[keep_mask],
+            beta_out[keep_mask],
+            se_out[keep_mask]
+        )
+        corrected_beta = corrected_ivw["beta"]
+        corrected_se = corrected_ivw["se"]
+        corrected_pval = corrected_ivw["pval"]
+    else:
+        corrected_beta = original_beta
+        corrected_se = original_se
+        corrected_pval = original_ivw["pval"]
+
+    # Distortion test
+    distortion_test_pval = np.nan
+    if distortion_test and len(outlier_indices) > 0:
+        # Test if difference between original and corrected is significant
+        diff = abs(corrected_beta - original_beta)
+        se_diff = np.sqrt(original_se**2 + corrected_se**2)
+        z_stat = diff / se_diff if se_diff > 0 else 0
+        distortion_test_pval = float(2 * stats.norm.sf(abs(z_stat)))
+
+    return {
+        "global_test_pval": global_test_pval,
+        "outlier_indices": outlier_indices,
+        "corrected_beta": float(corrected_beta),
+        "corrected_se": float(corrected_se),
+        "corrected_pval": float(corrected_pval),
+        "distortion_test_pval": float(distortion_test_pval),
+        "original_beta": float(original_beta),
+        "original_se": float(original_se),
+        "nsnp": len(beta_exp),
+    }
