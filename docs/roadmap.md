@@ -14,7 +14,7 @@ PyMR aims to be the **definitive Mendelian Randomization package** - not just ma
 - [x] MR-PRESSO (pleiotropy residual sum and outlier)
 - [x] Weighted mode
 - [x] MR-RAPS (robust adjusted profile score)
-- [ ] Contamination mixture
+- [x] Contamination mixture
 
 ### Sensitivity Analyses
 - [x] Heterogeneity (Cochran's Q, I²)
@@ -27,8 +27,8 @@ PyMR aims to be the **definitive Mendelian Randomization package** - not just ma
 ### Data Integration
 - [x] IEU OpenGWAS API (16,000+ GWAS)
 - [x] Local file loading
-- [ ] GWAS Catalog integration
-- [ ] Pan-UKB direct access
+- [x] GWAS Catalog integration
+- [x] Pan-UKB direct access
 - [ ] FinnGen integration
 
 ### Clumping

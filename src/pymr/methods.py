@@ -606,3 +606,141 @@ def mr_raps(
         "OR_uci": float(np.exp(beta + 1.96 * se)),
         "nsnp": n,
     }
+
+
+def contamination_mixture(
+    beta_exp: NDArray[np.floating[Any]],
+    se_exp: NDArray[np.floating[Any]],
+    beta_out: NDArray[np.floating[Any]],
+    se_out: NDArray[np.floating[Any]],
+    max_iter: int = 100,
+    tol: float = 1e-6,
+) -> dict[str, Any]:
+    """Contamination mixture model for MR.
+
+    Models SNP effects as a mixture of valid instruments (following the causal
+    estimate) and invalid instruments (pleiotropic). Uses EM algorithm to
+    estimate the mixture and identify contaminated SNPs.
+
+    The model assumes:
+    - Valid instruments: Wald ratio ~ N(beta_causal, sigma^2)
+    - Invalid instruments: Wald ratio ~ N(0, tau^2)
+
+    Args:
+        beta_exp: Effect sizes for exposure (per allele)
+        se_exp: Standard errors for exposure
+        beta_out: Effect sizes for outcome (per allele)
+        se_out: Standard errors for outcome
+        max_iter: Maximum iterations for EM algorithm
+        tol: Convergence tolerance
+
+    Returns:
+        Dictionary with:
+            - beta: Causal effect estimate
+            - se: Standard error
+            - pval: P-value
+            - prob_valid: Posterior probability each SNP is valid (array)
+            - n_valid: Expected number of valid instruments
+            - nsnp: Total number of SNPs
+
+    Raises:
+        ValueError: If fewer than 3 SNPs provided
+
+    References:
+        Burgess et al. (2020) A robust and efficient method for Mendelian
+        randomization with hundreds of genetic variants.
+        Nature Communications 11:376.
+    """
+    if len(beta_exp) < 3:
+        msg = "Contamination mixture requires at least 3 SNPs"
+        raise ValueError(msg)
+
+    n = len(beta_exp)
+
+    # Compute Wald ratios and their standard errors
+    wald_ratio = beta_out / beta_exp
+    wald_se = np.abs(se_out / beta_exp)
+
+    # Initialize with IVW estimate
+    ivw_result = ivw(beta_exp, se_exp, beta_out, se_out)
+    beta = ivw_result["beta"]
+
+    # Initialize mixture parameters
+    # pi = proportion of valid instruments
+    pi = 0.8  # Start assuming 80% valid
+    sigma2 = np.var(wald_ratio)  # Variance for valid instruments
+    tau2 = sigma2 * 2  # Variance for invalid instruments (larger)
+
+    # EM algorithm
+    for iteration in range(max_iter):
+        beta_old = beta
+        pi_old = pi
+
+        # E-step: Compute posterior probabilities
+        # P(valid | data) for each SNP
+
+        # Likelihood under valid model: N(beta, wald_se^2 + sigma2)
+        var_valid = wald_se**2 + sigma2
+        log_lik_valid = stats.norm.logpdf(wald_ratio, loc=beta, scale=np.sqrt(var_valid))
+
+        # Likelihood under invalid model: N(0, wald_se^2 + tau2)
+        var_invalid = wald_se**2 + tau2
+        log_lik_invalid = stats.norm.logpdf(wald_ratio, loc=0, scale=np.sqrt(var_invalid))
+
+        # Posterior probability of being valid
+        # Using log-sum-exp trick for numerical stability
+        log_prior_valid = np.log(pi)
+        log_prior_invalid = np.log(1 - pi)
+
+        log_post_valid = log_lik_valid + log_prior_valid
+        log_post_invalid = log_lik_invalid + log_prior_invalid
+
+        # Normalize
+        max_log = np.maximum(log_post_valid, log_post_invalid)
+        prob_valid = np.exp(log_post_valid - max_log) / (
+            np.exp(log_post_valid - max_log) + np.exp(log_post_invalid - max_log)
+        )
+
+        # M-step: Update parameters
+
+        # Update pi (proportion of valid instruments)
+        pi = np.mean(prob_valid)
+
+        # Update beta (weighted by posterior probability of being valid)
+        weights = prob_valid / var_valid
+        beta = np.sum(weights * wald_ratio) / np.sum(weights)
+
+        # Update sigma2 (variance for valid instruments)
+        sigma2 = np.sum(prob_valid * (wald_ratio - beta)**2) / np.sum(prob_valid)
+        sigma2 = max(sigma2, 1e-10)  # Ensure positive
+
+        # Update tau2 (variance for invalid instruments)
+        tau2 = np.sum((1 - prob_valid) * wald_ratio**2) / np.sum(1 - prob_valid)
+        tau2 = max(tau2, 1e-10)  # Ensure positive
+
+        # Check convergence
+        if abs(beta - beta_old) < tol and abs(pi - pi_old) < tol:
+            break
+
+    # Compute standard error for beta
+    # Using inverse of Fisher information for valid instruments
+    var_beta = 1 / np.sum(prob_valid / var_valid)
+    se = np.sqrt(var_beta)
+
+    # Ensure positive SE
+    se = max(float(se), 1e-10)
+
+    # P-value
+    pval = 2 * stats.norm.sf(np.abs(beta / se))
+
+    # Expected number of valid instruments
+    n_valid = float(np.sum(prob_valid))
+
+    return {
+        "beta": float(beta),
+        "se": se,
+        "pval": float(pval),
+        "prob_valid": prob_valid,
+        "n_valid": n_valid,
+        "nsnp": n,
+    }

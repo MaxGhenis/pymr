@@ -412,3 +412,489 @@ class TestIntegrationWorkflow:
         # 4. Verify data is ready for harmonization
         assert all(col in instruments.columns for col in ["rsid", "beta", "se"])
         assert all(col in outcome.columns for col in ["rsid", "beta", "se"])
+
+
+class TestPanUKBFunctions:
+    """Test Pan-UKB GWAS data access functions (TDD - tests written first)."""
+
+    @patch("pymr.api.requests.get")
+    def test_panukb_list_phenotypes(self, mock_get):
+        """panukb_list_phenotypes should return DataFrame of available phenotypes."""
+        # Arrange: Mock manifest response
+        import gzip
+        mock_response = Mock()
+        mock_response.status_code = 200
+        # Simulate TSV content with phenotype manifest (must be gzipped)
+        tsv_content = b"trait_type\tphenocode\tdescription\tn_cases\tn_controls\tsaige_version\n"
+        tsv_content += b"continuous\t50\tStanding height\tNA\tNA\t0.44.5\n"
+        tsv_content += b"continuous\t21001\tBody mass index (BMI)\tNA\tNA\t0.44.5\n"
+        tsv_content += b"biomarkers\t30690\tCholesterol\tNA\tNA\t0.44.5\n"
+        mock_response.content = gzip.compress(tsv_content)
+        mock_get.return_value = mock_response
+
+        # Act
+        from pymr.api import panukb_list_phenotypes
+        result = panukb_list_phenotypes()
+
+        # Assert
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) == 3
+        assert "phenocode" in result.columns
+        assert "description" in result.columns
+        assert "trait_type" in result.columns
+        assert "21001" in result["phenocode"].astype(str).values
+
+    @patch("pymr.api.requests.get")
+    def test_panukb_search(self, mock_get):
+        """panukb_search should search phenotypes by keyword."""
+        # Arrange: Mock manifest response
+        import gzip
+        mock_response = Mock()
+        mock_response.status_code = 200
+        tsv_content = b"trait_type\tphenocode\tdescription\tn_cases\tn_controls\tsaige_version\n"
+        tsv_content += b"continuous\t50\tStanding height\tNA\tNA\t0.44.5\n"
+        tsv_content += b"continuous\t21001\tBody mass index (BMI)\tNA\tNA\t0.44.5\n"
+        tsv_content += b"biomarkers\t30690\tCholesterol\tNA\tNA\t0.44.5\n"
+        mock_response.content = gzip.compress(tsv_content)
+        mock_get.return_value = mock_response
+
+        # Act
+        from pymr.api import panukb_search
+        result = panukb_search("BMI")
+
+        # Assert
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) >= 1  # Should find at least the BMI phenotype
+        assert any("BMI" in str(desc) for desc in result["description"].values)
+
+    @patch("pymr.api.requests.get")
+    def test_panukb_search_case_insensitive(self, mock_get):
+        """panukb_search should be case-insensitive."""
+        # Arrange
+        import gzip
+        mock_response = Mock()
+        mock_response.status_code = 200
+        tsv_content = b"trait_type\tphenocode\tdescription\tn_cases\tn_controls\tsaige_version\n"
+        tsv_content += b"continuous\t21001\tBody mass index (BMI)\tNA\tNA\t0.44.5\n"
+        mock_response.content = gzip.compress(tsv_content)
+        mock_get.return_value = mock_response
+
+        # Act
+        from pymr.api import panukb_search
+        result = panukb_search("bmi")  # lowercase
+
+        # Assert
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) >= 1
+
+    @patch("pymr.api.requests.get")
+    def test_panukb_load_gwas_basic(self, mock_get):
+        """panukb_load_gwas should load GWAS summary statistics for a phenotype."""
+        # Arrange: Mock responses for manifest and GWAS file
+        import gzip
+        mock_responses = []
+
+        # First call: manifest (must be gzipped)
+        manifest_response = Mock()
+        manifest_response.status_code = 200
+        manifest_content = b"trait_type\tphenocode\tdescription\tn_cases\tn_controls\tsaige_version\n"
+        manifest_content += b"continuous\t21001\tBody mass index (BMI)\tNA\tNA\t0.44.5\n"
+        manifest_response.content = gzip.compress(manifest_content)
+        mock_responses.append(manifest_response)
+
+        # Second call: GWAS summary stats (bgzipped TSV)
+        gwas_data = b"chr\tpos\tsnp\tref\talt\tbeta\tse\tpval\tlow_confidence_variant\tn_complete_samples\tAF\n"
+        gwas_data += b"1\t100000\trs123\tA\tG\t0.05\t0.01\t1.2e-8\tFALSE\t100000\t0.3\n"
+        gwas_data += b"2\t200000\trs456\tC\tT\t0.08\t0.02\t3.4e-10\tFALSE\t100000\t0.45\n"
+        gwas_response = Mock()
+        gwas_response.status_code = 200
+        gwas_response.content = gzip.compress(gwas_data)
+        mock_responses.append(gwas_response)
+
+        mock_get.side_effect = mock_responses
+
+        # Act
+        from pymr.api import panukb_load_gwas
+        result = panukb_load_gwas("21001", ancestry="EUR")
+
+        # Assert
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) == 2
+        assert "snp" in result.columns or "rsid" in result.columns
+        assert "beta" in result.columns
+        assert "se" in result.columns
+        assert "pval" in result.columns
+
+    @patch("pymr.api.requests.get")
+    def test_panukb_load_gwas_default_ancestry(self, mock_get):
+        """panukb_load_gwas should default to EUR ancestry."""
+        # Arrange
+        import gzip
+        mock_responses = []
+
+        manifest_response = Mock()
+        manifest_response.status_code = 200
+        manifest_content = b"trait_type\tphenocode\tdescription\tn_cases\tn_controls\tsaige_version\n"
+        manifest_content += b"continuous\t21001\tBody mass index (BMI)\tNA\tNA\t0.44.5\n"
+        manifest_response.content = gzip.compress(manifest_content)
+        mock_responses.append(manifest_response)
+
+        gwas_data = b"chr\tpos\tsnp\tref\talt\tbeta\tse\tpval\tlow_confidence_variant\tn_complete_samples\tAF\n"
+        gwas_data += b"1\t100000\trs123\tA\tG\t0.05\t0.01\t1.2e-8\tFALSE\t100000\t0.3\n"
+        gwas_response = Mock()
+        gwas_response.status_code = 200
+        gwas_response.content = gzip.compress(gwas_data)
+        mock_responses.append(gwas_response)
+
+        mock_get.side_effect = mock_responses
+
+        # Act
+        from pymr.api import panukb_load_gwas
+        result = panukb_load_gwas("21001")  # No ancestry specified
+
+        # Assert
+        assert isinstance(result, pd.DataFrame)
+        # Should have called with EUR in URL
+        assert any("EUR" in str(call) for call in mock_get.call_args_list)
+
+    @patch("pymr.api.requests.get")
+    def test_panukb_load_gwas_invalid_phenotype(self, mock_get):
+        """panukb_load_gwas should raise error for invalid phenotype code."""
+        # Arrange
+        mock_response = Mock()
+        mock_response.status_code = 404
+        mock_response.raise_for_status.side_effect = Exception("Not found")
+        mock_get.return_value = mock_response
+
+        # Act & Assert
+        from pymr.api import panukb_load_gwas
+        with pytest.raises(Exception):
+            panukb_load_gwas("INVALID_PHENO")
+
+
+class TestGWASCatalogSearch:
+    """Test gwas_catalog_search function for searching by trait."""
+
+    @patch("pymr.api.requests.get")
+    def test_gwas_catalog_search_basic(self, mock_get):
+        """gwas_catalog_search should search for studies by trait name."""
+        # Arrange: Mock paginated API response
+        mock_response_page1 = Mock()
+        mock_response_page1.status_code = 200
+        mock_response_page1.json.return_value = {
+            "_embedded": {
+                "studies": [
+                    {
+                        "accessionId": "GCST001234",
+                        "diseaseTrait": {
+                            "trait": "Body mass index"
+                        },
+                        "publicationInfo": {
+                            "author": {
+                                "fullname": "Locke AE"
+                            },
+                            "publicationDate": "2015-02-01",
+                            "pubmedId": "25673413"
+                        },
+                        "initialSampleSize": "339,224 European ancestry individuals",
+                        "replicateSampleSize": "N/A"
+                    },
+                    {
+                        "accessionId": "GCST002783",
+                        "diseaseTrait": {
+                            "trait": "Childhood body mass index"
+                        },
+                        "publicationInfo": {
+                            "author": {
+                                "fullname": "Felix JF"
+                            },
+                            "publicationDate": "2016-03-15",
+                            "pubmedId": "26961502"
+                        },
+                        "initialSampleSize": "47,541 European ancestry children",
+                        "replicateSampleSize": "10,000"
+                    }
+                ]
+            },
+            "page": {
+                "size": 20,
+                "totalElements": 2,
+                "totalPages": 1,
+                "number": 0
+            }
+        }
+        mock_get.return_value = mock_response_page1
+
+        # Act
+        from pymr.api import gwas_catalog_search
+        result = gwas_catalog_search("body mass index")
+
+        # Assert
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) == 2
+        assert "study_id" in result.columns
+        assert "trait" in result.columns
+        assert "author" in result.columns
+        assert result.iloc[0]["study_id"] == "GCST001234"
+        assert "body mass index" in result.iloc[0]["trait"].lower()
+        # Should have called API with correct parameters
+        mock_get.assert_called()
+        call_args = mock_get.call_args[0][0]
+        assert "www.ebi.ac.uk/gwas/rest/api" in call_args
+
+    @patch("pymr.api.requests.get")
+    def test_gwas_catalog_search_pagination(self, mock_get):
+        """gwas_catalog_search should handle paginated results."""
+        # Mock two pages of results
+        mock_response_page1 = Mock()
+        mock_response_page1.status_code = 200
+        mock_response_page1.json.return_value = {
+            "_embedded": {
+                "studies": [
+                    {
+                        "accessionId": f"GCST{i:06d}",
+                        "diseaseTrait": {"trait": f"Trait {i}"},
+                        "publicationInfo": {
+                            "author": {"fullname": "Author A"},
+                            "publicationDate": "2020-01-01",
+                            "pubmedId": "12345678"
+                        },
+                        "initialSampleSize": "10000",
+                        "replicateSampleSize": "N/A"
+                    }
+                    for i in range(20)
+                ]
+            },
+            "page": {"size": 20, "totalElements": 25, "totalPages": 2, "number": 0}
+        }
+
+        mock_response_page2 = Mock()
+        mock_response_page2.status_code = 200
+        mock_response_page2.json.return_value = {
+            "_embedded": {
+                "studies": [
+                    {
+                        "accessionId": f"GCST{i:06d}",
+                        "diseaseTrait": {"trait": f"Trait {i}"},
+                        "publicationInfo": {
+                            "author": {"fullname": "Author B"},
+                            "publicationDate": "2020-01-01",
+                            "pubmedId": "12345678"
+                        },
+                        "initialSampleSize": "10000",
+                        "replicateSampleSize": "N/A"
+                    }
+                    for i in range(20, 25)
+                ]
+            },
+            "page": {"size": 20, "totalElements": 25, "totalPages": 2, "number": 1}
+        }
+
+        mock_get.side_effect = [mock_response_page1, mock_response_page2]
+
+        # Act
+        from pymr.api import gwas_catalog_search
+        result = gwas_catalog_search("diabetes")
+
+        # Assert
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) == 25
+        assert mock_get.call_count == 2
+
+
+class TestGWASCatalogGetStudy:
+    """Test gwas_catalog_get_study function for retrieving study metadata."""
+
+    @patch("pymr.api.requests.get")
+    def test_gwas_catalog_get_study_basic(self, mock_get):
+        """gwas_catalog_get_study should fetch study metadata."""
+        # Arrange
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "accessionId": "GCST001234",
+            "diseaseTrait": {
+                "trait": "Body mass index"
+            },
+            "publicationInfo": {
+                "author": {
+                    "fullname": "Locke AE"
+                },
+                "publicationDate": "2015-02-01",
+                "pubmedId": "25673413",
+                "title": "Genetic studies of body mass index yield new insights"
+            },
+            "initialSampleSize": "339,224 European ancestry individuals",
+            "replicateSampleSize": "N/A",
+            "ancestryInitial": [
+                {"type": "European", "numberOfIndividuals": 339224}
+            ]
+        }
+        mock_get.return_value = mock_response
+
+        # Act
+        from pymr.api import gwas_catalog_get_study
+        result = gwas_catalog_get_study("GCST001234")
+
+        # Assert
+        assert isinstance(result, dict)
+        assert result["study_id"] == "GCST001234"
+        assert result["trait"] == "Body mass index"
+        assert result["author"] == "Locke AE"
+        assert "25673413" in str(result["pubmed_id"])
+
+
+class TestGWASCatalogGetAssociations:
+    """Test gwas_catalog_get_associations function for retrieving associations."""
+
+    @patch("pymr.api.requests.get")
+    def test_gwas_catalog_get_associations_basic(self, mock_get):
+        """gwas_catalog_get_associations should fetch SNP associations for a study."""
+        # Arrange: Mock paginated response
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "_embedded": {
+                "associations": [
+                    {
+                        "rsId": "rs9939609",
+                        "orPerCopyNum": None,
+                        "betaNum": 0.39,
+                        "standardError": 0.013,
+                        "pvalueExponent": -271,
+                        "pvalueMantissa": 1.2,
+                        "riskFrequency": "0.42",
+                        "loci": [
+                            {
+                                "strongestRiskAlleles": [
+                                    {
+                                        "riskAlleleName": "rs9939609-A"
+                                    }
+                                ]
+                            }
+                        ],
+                        "snps": [
+                            {
+                                "locations": [
+                                    {
+                                        "chromosomeName": "16",
+                                        "chromosomePosition": 53820527
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "rsId": "rs571312",
+                        "orPerCopyNum": None,
+                        "betaNum": 0.06,
+                        "standardError": 0.009,
+                        "pvalueExponent": -12,
+                        "pvalueMantissa": 2.4,
+                        "riskFrequency": "0.78",
+                        "loci": [
+                            {
+                                "strongestRiskAlleles": [
+                                    {
+                                        "riskAlleleName": "rs571312-C"
+                                    }
+                                ]
+                            }
+                        ],
+                        "snps": [
+                            {
+                                "locations": [
+                                    {
+                                        "chromosomeName": "18",
+                                        "chromosomePosition": 57851097
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "page": {
+                "size": 20,
+                "totalElements": 2,
+                "totalPages": 1,
+                "number": 0
+            }
+        }
+        mock_get.return_value = mock_response
+
+        # Act
+        from pymr.api import gwas_catalog_get_associations
+        result = gwas_catalog_get_associations("GCST001234")
+
+        # Assert
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) == 2
+        assert "rsid" in result.columns
+        assert "beta" in result.columns
+        assert "se" in result.columns
+        assert "pval" in result.columns
+        assert "chr" in result.columns
+        assert "position" in result.columns
+        assert "ea" in result.columns
+        assert "eaf" in result.columns
+        assert result.iloc[0]["rsid"] == "rs9939609"
+        assert result.iloc[0]["beta"] == 0.39
+        assert result.iloc[0]["se"] == 0.013
+        assert result.iloc[0]["chr"] == "16"
+
+    @patch("pymr.api.requests.get")
+    def test_gwas_catalog_get_associations_pagination(self, mock_get):
+        """gwas_catalog_get_associations should handle multiple pages."""
+        # Mock two pages
+        mock_page1 = Mock()
+        mock_page1.status_code = 200
+        mock_page1.json.return_value = {
+            "_embedded": {
+                "associations": [
+                    {
+                        "rsId": f"rs{i}",
+                        "betaNum": 0.1,
+                        "standardError": 0.01,
+                        "pvalueExponent": -10,
+                        "pvalueMantissa": 1.0,
+                        "riskFrequency": "0.5",
+                        "loci": [{"strongestRiskAlleles": [{"riskAlleleName": f"rs{i}-A"}]}],
+                        "snps": [{"locations": [{"chromosomeName": "1", "chromosomePosition": i * 1000}]}]
+                    }
+                    for i in range(20)
+                ]
+            },
+            "page": {"size": 20, "totalElements": 25, "totalPages": 2, "number": 0}
+        }
+
+        mock_page2 = Mock()
+        mock_page2.status_code = 200
+        mock_page2.json.return_value = {
+            "_embedded": {
+                "associations": [
+                    {
+                        "rsId": f"rs{i}",
+                        "betaNum": 0.1,
+                        "standardError": 0.01,
+                        "pvalueExponent": -10,
+                        "pvalueMantissa": 1.0,
+                        "riskFrequency": "0.5",
+                        "loci": [{"strongestRiskAlleles": [{"riskAlleleName": f"rs{i}-A"}]}],
+                        "snps": [{"locations": [{"chromosomeName": "1", "chromosomePosition": i * 1000}]}]
+                    }
+                    for i in range(20, 25)
+                ]
+            },
+            "page": {"size": 20, "totalElements": 25, "totalPages": 2, "number": 1}
+        }
+
+        mock_get.side_effect = [mock_page1, mock_page2]
+
+        # Act
+        from pymr.api import gwas_catalog_get_associations
+        result = gwas_catalog_get_associations("GCST001234")
+
+        # Assert
+        assert len(result) == 25
+        assert mock_get.call_count == 2

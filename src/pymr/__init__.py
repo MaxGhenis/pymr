@@ -13,7 +13,7 @@ Example:
 from pymr.mr import MR
 from pymr.io import load_gwas
 from pymr.harmonize import harmonize
-from pymr.methods import mr_presso, ivw, weighted_median, mr_egger, simple_mode, weighted_mode, mr_raps
+from pymr.methods import mr_presso, ivw, weighted_median, mr_egger, simple_mode, weighted_mode, mr_raps, contamination_mixture
 from pymr import plots
 from pymr.api import (
     IEUClient,
@@ -21,6 +21,12 @@ from pymr.api import (
     get_outcome,
     search_gwas,
     list_gwas,
+    panukb_list_phenotypes,
+    panukb_search,
+    panukb_load_gwas,
+    gwas_catalog_search,
+    gwas_catalog_get_study,
+    gwas_catalog_get_associations,
 )
 from pymr.sensitivity import (
     steiger_filtering,
@@ -45,11 +51,19 @@ __all__ = [
     "mr_egger",
     "simple_mode",
     "weighted_mode",
+    "mr_raps",
+    "contamination_mixture",
     "IEUClient",
     "get_instruments",
     "get_outcome",
     "search_gwas",
     "list_gwas",
+    "panukb_list_phenotypes",
+    "panukb_search",
+    "panukb_load_gwas",
+    "gwas_catalog_search",
+    "gwas_catalog_get_study",
+    "gwas_catalog_get_associations",
     "steiger_filtering",
     "cochrans_q",
     "rucker_q",
