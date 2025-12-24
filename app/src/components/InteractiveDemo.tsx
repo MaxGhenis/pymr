@@ -115,15 +115,24 @@ export function InteractiveDemo() {
     <section className="section">
       <h2>Interactive MR Demo</h2>
       <p className="intro">
-        This simulation shows how MR works in practice. Each dot represents a genetic variant (SNP).
-        For each SNP, we plot its effect on the <strong>exposure</strong> (x-axis) against its effect
-        on the <strong>outcome</strong> (y-axis).
+        <strong>Where do these numbers come from?</strong> Each dot is a SNP. The x-axis shows β<sub>exposure</sub>{' '}
+        (from a GWAS regressing the exposure on that SNP), and the y-axis shows β<sub>outcome</sub>{' '}
+        (from a GWAS regressing the outcome on that SNP).
       </p>
       <p className="intro">
-        If the exposure truly causes the outcome, these points should fall along a line — the slope
-        of that line is the <strong>causal effect</strong>. Red dots are "outliers" caused by pleiotropy
-        (genes affecting the outcome through other pathways). Try increasing pleiotropy to see how
-        different methods handle it.
+        <strong>Two-sample MR:</strong> These betas typically come from <em>different studies</em> — one
+        GWAS for the exposure, another for the outcome. This avoids bias from using the same sample twice,
+        and lets us combine published summary statistics without needing individual-level data.
+      </p>
+      <p className="intro">
+        <strong>Why not individual-level?</strong> One-sample MR (same individuals, full data) has more
+        power, but individual-level genetic data is rarely shared. Two-sample MR works with publicly
+        available GWAS summaries, enabling analyses across thousands of traits.
+      </p>
+      <p className="intro">
+        <strong>The causal effect:</strong> If the exposure truly causes the outcome, these points fall
+        along a line through the origin — the slope is the causal effect (β<sub>outcome</sub>/β<sub>exposure</sub>).
+        Red dots are pleiotropic outliers. Try increasing pleiotropy to see how methods differ.
       </p>
 
       <div className="demo-layout">
