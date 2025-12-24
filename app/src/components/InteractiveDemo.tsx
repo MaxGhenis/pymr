@@ -185,8 +185,8 @@ export function InteractiveDemo() {
 
         <div className="chart-container">
           <h4>SNP Effects: Exposure vs Outcome</h4>
-          <ResponsiveContainer width="100%" height={300}>
-            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+          <ResponsiveContainer width="100%" height={340}>
+            <ScatterChart margin={{ top: 20, right: 20, bottom: 60, left: 20 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="x"
@@ -203,7 +203,7 @@ export function InteractiveDemo() {
                 formatter={(value) => typeof value === 'number' ? value.toFixed(4) : value}
                 labelFormatter={(_, payload) => payload?.[0]?.payload?.snp || ''}
               />
-              <Legend />
+              <Legend verticalAlign="bottom" wrapperStyle={{ paddingTop: 20 }} />
 
               {/* IVW line */}
               <ReferenceLine
