@@ -80,7 +80,7 @@ function App() {
                     </p>
                     <p>
                       So if people with "high alcohol" genes have different disease rates than people with
-                      "low alcohol" genes, we can be more confident that <strong>alcohol actually causes</strong>
+                      "low alcohol" genes, we can be more confident that <strong>alcohol actually causes</strong>{' '}
                       the difference — not some hidden confounder.
                     </p>
                   </div>
@@ -91,7 +91,7 @@ function App() {
                       <h3>Real Example: Does BMI Cause Diabetes?</h3>
                       <p>
                         We know obesity and diabetes are correlated. But does higher BMI actually
-                        <em> cause</em> diabetes, or do other factors explain both? MR studies using
+                        <em>cause</em> diabetes, or do other factors explain both? MR studies using
                         "obesity genes" have confirmed that <strong>yes, higher BMI causally increases
                         diabetes risk</strong> — supporting weight loss interventions.
                       </p>
@@ -104,7 +104,7 @@ function App() {
                     <h3>Key Terms Explained</h3>
                     <div className="term-grid">
                       <div className="term">
-                        <h4>SNP (Genetic Variant)</h4>
+                        <h4>SNP (Single Nucleotide Polymorphism)</h4>
                         <p>A single letter change in your DNA. Some SNPs affect traits like height, BMI, or blood pressure.</p>
                       </div>
                       <div className="term">
