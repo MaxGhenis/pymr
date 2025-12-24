@@ -3,26 +3,14 @@ format: jb-book
 root: intro
 
 parts:
-  - caption: Getting Started
-    chapters:
-      - file: quickstart
-      - file: installation
-
   - caption: User Guide
     chapters:
-      - file: guide/data-loading
-      - file: guide/harmonization
-      - file: guide/mr-methods
-      - file: guide/sensitivity
+      - file: bayesian_mr
+      - file: bayesian_mr_quickref
+      - file: mr_presso
+      - file: plots
+      - file: api_integration
 
-  - caption: Tutorials
+  - caption: Development
     chapters:
-      - file: tutorials/bmi-diabetes
-      - file: tutorials/panukb
-
-  - caption: API Reference
-    chapters:
-      - file: api/mr
-      - file: api/methods
-      - file: api/harmonize
-      - file: api/io
+      - file: roadmap
