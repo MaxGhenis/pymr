@@ -12,8 +12,8 @@ PyMR aims to be the **definitive Mendelian Randomization package** - not just ma
 - [x] MR-Egger
 - [x] Simple mode
 - [x] MR-PRESSO (pleiotropy residual sum and outlier)
-- [ ] Weighted mode
-- [ ] MR-RAPS (robust adjusted profile score)
+- [x] Weighted mode
+- [x] MR-RAPS (robust adjusted profile score)
 - [ ] Contamination mixture
 
 ### Sensitivity Analyses
@@ -22,7 +22,7 @@ PyMR aims to be the **definitive Mendelian Randomization package** - not just ma
 - [x] Leave-one-out
 - [x] Single SNP analysis
 - [x] Steiger filtering (directionality test)
-- [ ] Funnel plot asymmetry tests
+- [x] Funnel plot asymmetry tests
 
 ### Data Integration
 - [x] IEU OpenGWAS API (16,000+ GWAS)
