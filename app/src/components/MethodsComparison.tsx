@@ -1,4 +1,3 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Check, AlertTriangle, X, Minus } from 'lucide-react'
 
 const methods = [
@@ -8,9 +7,9 @@ const methods = [
     description: 'Weighted average of per-SNP estimates. Most efficient when all instruments are valid.',
     pros: ['Highest statistical power', 'Simple to interpret', 'Default method'],
     cons: ['Biased if any SNP violates assumptions', 'No pleiotropy test'],
-    robustness: 1,
-    power: 5,
-    complexity: 1,
+    power: 'Highest',
+    robustness: 'None — assumes all instruments valid',
+    pleiotropyHandling: 'None',
   },
   {
     name: 'Weighted Median',
@@ -18,9 +17,9 @@ const methods = [
     description: 'Takes the median of per-SNP estimates. Robust if >50% of instruments are valid.',
     pros: ['Robust to up to 50% invalid instruments', 'Still interpretable'],
     cons: ['Lower power than IVW', 'Assumes majority valid'],
-    robustness: 3,
-    power: 3,
-    complexity: 2,
+    power: 'Moderate',
+    robustness: 'Up to 50% invalid instruments',
+    pleiotropyHandling: 'Tolerates minority invalid',
   },
   {
     name: 'MR-Egger',
@@ -28,9 +27,9 @@ const methods = [
     description: 'Allows for pleiotropy via an intercept term. Tests for directional pleiotropy.',
     pros: ['Detects directional pleiotropy', 'Provides pleiotropy test'],
     cons: ['Low power', 'Assumes InSIDE', 'Wide confidence intervals'],
-    robustness: 4,
-    power: 2,
-    complexity: 3,
+    power: 'Low',
+    robustness: 'Allows directional pleiotropy (InSIDE assumption)',
+    pleiotropyHandling: 'Intercept tests for it',
   },
   {
     name: 'MR-PRESSO',
@@ -38,9 +37,9 @@ const methods = [
     description: 'Detects and removes outlier SNPs, then re-estimates the causal effect.',
     pros: ['Identifies specific outliers', 'Corrected estimate available'],
     cons: ['Computationally intensive', 'May remove valid SNPs'],
-    robustness: 4,
-    power: 4,
-    complexity: 4,
+    power: 'Moderate-High',
+    robustness: 'Removes detected outliers',
+    pleiotropyHandling: 'Outlier detection + removal',
   },
   {
     name: 'Contamination Mixture',
@@ -48,9 +47,9 @@ const methods = [
     description: 'Models SNPs as mixture of valid and invalid instruments using EM algorithm.',
     pros: ['Probabilistic framework', 'Soft outlier handling'],
     cons: ['Complex to interpret', 'Requires many SNPs'],
-    robustness: 5,
-    power: 3,
-    complexity: 5,
+    power: 'Moderate',
+    robustness: 'Models mixture of valid/invalid',
+    pleiotropyHandling: 'Probabilistic weighting',
   },
   {
     name: 'Bayesian MR',
@@ -58,18 +57,11 @@ const methods = [
     description: 'Full posterior inference with prior incorporation. Returns credible intervals.',
     pros: ['Full uncertainty quantification', 'Prior incorporation', 'Bayes factors'],
     cons: ['Computationally expensive', 'Requires prior specification'],
-    robustness: 4,
-    power: 4,
-    complexity: 5,
+    power: 'Depends on priors',
+    robustness: 'Prior-informed shrinkage',
+    pleiotropyHandling: 'Via prior specification',
   },
 ]
-
-const chartData = methods.map(m => ({
-  name: m.name,
-  robustness: m.robustness,
-  power: m.power,
-  complexity: m.complexity,
-}))
 
 export function MethodsComparison() {
   return (
@@ -79,23 +71,28 @@ export function MethodsComparison() {
         Different methods make different assumptions. Choose based on your data quality and research question.
       </p>
 
-      <div className="methods-chart">
-        <h4>Method Characteristics (1-5 scale)</h4>
-        <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={chartData} layout="vertical" margin={{ left: 80, bottom: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" domain={[0, 5]} tickCount={6} label={{ value: 'Rating (1=Low, 5=High)', position: 'bottom', offset: 0 }} />
-            <YAxis type="category" dataKey="name" />
-            <Tooltip />
-            <Legend verticalAlign="top" wrapperStyle={{ paddingBottom: 10 }} />
-            <Bar dataKey="robustness" name="Robustness to Pleiotropy" fill="#10B981" />
-            <Bar dataKey="power" name="Statistical Power" fill="#3B82F6" />
-            <Bar dataKey="complexity" name="Complexity" fill="#F59E0B" />
-          </BarChart>
-        </ResponsiveContainer>
-        <p className="table-note">
-          Robustness = how well the method handles invalid instruments; Power = ability to detect true effects; Complexity = computational/interpretive difficulty.
-        </p>
+      <div className="methods-summary">
+        <h4>Method Characteristics</h4>
+        <table className="decision-table">
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Statistical Power</th>
+              <th>Robustness</th>
+              <th>Pleiotropy Handling</th>
+            </tr>
+          </thead>
+          <tbody>
+            {methods.map((method) => (
+              <tr key={method.name}>
+                <td><strong>{method.name}</strong></td>
+                <td>{method.power}</td>
+                <td>{method.robustness}</td>
+                <td>{method.pleiotropyHandling}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       <div className="methods-grid">
