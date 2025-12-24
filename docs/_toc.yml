@@ -11,6 +11,14 @@ parts:
       - file: plots
       - file: api_integration
 
+  - caption: Examples
+    chapters:
+      - file: examples/real_world_examples
+
+  - caption: Validation
+    chapters:
+      - file: validation/twosamplemr_comparison
+
   - caption: Development
     chapters:
       - file: roadmap

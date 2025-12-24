@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "pymr"
+name = "pymr-genetics"
 version = "0.1.0"
 description = "Modern Python package for Mendelian Randomization analysis"
 readme = "README.md"
