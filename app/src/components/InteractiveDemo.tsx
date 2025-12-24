@@ -210,7 +210,6 @@ export function InteractiveDemo() {
                 segment={[{ x: 0, y: 0 }, { x: 0.2, y: 0.2 * results.ivw.beta }]}
                 stroke="#3B82F6"
                 strokeWidth={2}
-                label="IVW"
               />
 
               {/* Egger line */}
@@ -222,7 +221,6 @@ export function InteractiveDemo() {
                 stroke="#10B981"
                 strokeWidth={2}
                 strokeDasharray="5,5"
-                label="Egger"
               />
 
               {/* True effect line */}
@@ -245,6 +243,20 @@ export function InteractiveDemo() {
               />
             </ScatterChart>
           </ResponsiveContainer>
+          <div className="line-legend">
+            <span className="line-legend-item">
+              <span className="line-sample solid blue"></span>
+              IVW estimate
+            </span>
+            <span className="line-legend-item">
+              <span className="line-sample dashed green"></span>
+              MR-Egger estimate
+            </span>
+            <span className="line-legend-item">
+              <span className="line-sample dashed gray"></span>
+              True effect
+            </span>
+          </div>
         </div>
 
         <div className="results-table">

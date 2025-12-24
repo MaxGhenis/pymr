@@ -176,6 +176,8 @@ body {
 /* MR Diagram */
 .mr-diagram {
   margin: 2rem 0;
+  position: relative;
+  padding-bottom: 60px;
 }
 
 .mr-diagram h3 {
@@ -192,14 +194,19 @@ body {
 }
 
 .diagram-tooltip {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: -50px;
   text-align: center;
-  padding: 0.75rem;
+  padding: 0.5rem 1rem;
   background: var(--gray-800);
   color: white;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   max-width: 400px;
-  margin: 1rem auto 0;
+  white-space: nowrap;
+  z-index: 10;
 }
 
 .diagram-legend {
@@ -392,6 +399,39 @@ body {
   margin: 0 0 1rem;
   text-align: center;
   color: var(--gray-700);
+}
+
+.line-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.line-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--gray-600);
+}
+
+.line-sample {
+  width: 24px;
+  height: 3px;
+}
+
+.line-sample.solid.blue {
+  background: #3B82F6;
+}
+
+.line-sample.dashed.green {
+  background: repeating-linear-gradient(90deg, #10B981 0, #10B981 5px, transparent 5px, transparent 8px);
+}
+
+.line-sample.dashed.gray {
+  background: repeating-linear-gradient(90deg, #9CA3AF 0, #9CA3AF 3px, transparent 3px, transparent 6px);
 }
 
 /* Results Table */
