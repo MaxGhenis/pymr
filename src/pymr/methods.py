@@ -261,6 +261,79 @@ def simple_mode(
     }
 
 
+def weighted_mode(
+    beta_exp: NDArray[np.floating[Any]],
+    se_exp: NDArray[np.floating[Any]],
+    beta_out: NDArray[np.floating[Any]],
+    se_out: NDArray[np.floating[Any]],
+    bandwidth: float | None = None,
+) -> dict[str, float]:
+    """Weighted mode-based MR estimation.
+
+    Similar to simple_mode but weights each SNP's contribution to the kernel
+    density by its precision (1/se^2). More precise estimates contribute more
+    to the mode estimation.
+
+    Args:
+        beta_exp: Effect sizes for exposure
+        se_exp: Standard errors for exposure
+        beta_out: Effect sizes for outcome
+        se_out: Standard errors for outcome
+        bandwidth: Kernel bandwidth (None for automatic)
+
+    Returns:
+        Dictionary with beta, se, pval, OR, OR_lci, OR_uci, nsnp
+    """
+    wald_ratio = beta_out / beta_exp
+    wald_se = np.abs(se_out / beta_exp)
+
+    # Inverse variance weights
+    weights = 1 / wald_se**2
+
+    # Silverman's rule of thumb for bandwidth
+    if bandwidth is None:
+        n = len(wald_ratio)
+        iqr = np.percentile(wald_ratio, 75) - np.percentile(wald_ratio, 25)
+        bandwidth = 0.9 * min(np.std(wald_ratio), iqr / 1.34) * n ** (-0.2)
+
+    # Kernel density estimation on a grid with inverse-variance weighting
+    grid = np.linspace(
+        np.min(wald_ratio) - 3 * bandwidth,
+        np.max(wald_ratio) + 3 * bandwidth,
+        1000,
+    )
+    density = np.zeros_like(grid)
+    for r, w in zip(wald_ratio, weights):
+        density += w * stats.norm.pdf(grid, loc=r, scale=bandwidth)
+
+    beta = float(grid[np.argmax(density)])
+
+    # Bootstrap SE (simplified)
+    rng = np.random.default_rng(42)
+    betas = []
+    for _ in range(1000):
+        idx = rng.choice(len(beta_exp), size=len(beta_exp), replace=True)
+        wr = beta_out[idx] / beta_exp[idx]
+        wt = 1 / (np.abs(se_out[idx] / beta_exp[idx]) ** 2)
+        d = np.zeros_like(grid)
+        for r, w in zip(wr, wt):
+            d += w * stats.norm.pdf(grid, loc=r, scale=bandwidth)
+        betas.append(grid[np.argmax(d)])
+
+    se = float(np.std(betas))
+    pval = 2 * stats.norm.sf(np.abs(beta / se)) if se > 0 else 1.0
+
+    return {
+        "beta": beta,
+        "se": se,
+        "pval": float(pval),
+        "OR": float(np.exp(beta)),
+        "OR_lci": float(np.exp(beta - 1.96 * se)),
+        "OR_uci": float(np.exp(beta + 1.96 * se)),
+        "nsnp": len(beta_exp),
+    }
+
+
 def mr_presso(
     beta_exp: NDArray[np.floating[Any]],
     se_exp: NDArray[np.floating[Any]],
@@ -408,4 +481,128 @@ def mr_presso(
         "original_beta": float(original_beta),
         "original_se": float(original_se),
         "nsnp": len(beta_exp),
+    }
+
+
+def mr_raps(
+    beta_exp: NDArray[np.floating[Any]],
+    se_exp: NDArray[np.floating[Any]],
+    beta_out: NDArray[np.floating[Any]],
+    se_out: NDArray[np.floating[Any]],
+    max_iter: int = 100,
+    tol: float = 1e-6,
+) -> dict[str, float]:
+    """MR-RAPS (Robust Adjusted Profile Score).
+
+    Accounts for measurement error in SNP-exposure effects using a robust
+    profile likelihood approach. More robust to weak instruments than IVW.
+
+    The method iteratively estimates the causal effect by:
+    1. Starting with IVW estimate
+    2. Computing robust weights based on Huber loss
+    3. Updating estimate until convergence
+
+    Args:
+        beta_exp: Effect sizes for exposure (per allele)
+        se_exp: Standard errors for exposure
+        beta_out: Effect sizes for outcome (per allele)
+        se_out: Standard errors for outcome
+        max_iter: Maximum iterations for convergence
+        tol: Convergence tolerance
+
+    Returns:
+        Dictionary with beta, se, pval, OR, OR_lci, OR_uci, nsnp
+
+    Raises:
+        ValueError: If fewer than 3 SNPs provided
+
+    References:
+        Zhao et al. (2020) Statistical inference in two-sample summary-data
+        Mendelian randomization using robust adjusted profile score.
+        International Journal of Epidemiology.
+    """
+    if len(beta_exp) < 3:
+        msg = "MR-RAPS requires at least 3 SNPs"
+        raise ValueError(msg)
+
+    n = len(beta_exp)
+
+    # Initialize with IVW estimate
+    ivw_result = ivw(beta_exp, se_exp, beta_out, se_out)
+    beta = ivw_result["beta"]
+
+    # Huber constant (standard value)
+    k = 1.345
+
+    # Iterative robust estimation
+    for iteration in range(max_iter):
+        beta_old = beta
+
+        # Compute residuals
+        residuals = beta_out - beta * beta_exp
+
+        # Variance accounting for measurement error in exposure
+        # var(Y - beta*X) = var(Y) + beta^2 * var(X)
+        var_total = se_out**2 + (beta**2) * (se_exp**2)
+        std_total = np.sqrt(var_total)
+
+        # Standardized residuals
+        std_residuals = residuals / std_total
+
+        # Huber weights
+        weights = np.ones(n)
+        outlier_mask = np.abs(std_residuals) > k
+        weights[outlier_mask] = k / np.abs(std_residuals[outlier_mask])
+
+        # Weighted estimate accounting for measurement error
+        # Weight by precision, adjusted by robust weight
+        precision = weights / var_total
+
+        # Numerator: sum of weighted ratios
+        numerator = np.sum(precision * beta_out * beta_exp)
+
+        # Denominator: sum of weighted exposure effects squared
+        denominator = np.sum(precision * beta_exp**2)
+
+        # Update beta
+        if denominator > 0:
+            beta = numerator / denominator
+        else:
+            # Fallback if denominator is zero
+            beta = 0.0
+
+        # Check convergence
+        if abs(beta - beta_old) < tol:
+            break
+
+    # Compute standard error
+    # Variance accounting for measurement error
+    var_total = se_out**2 + (beta**2) * (se_exp**2)
+    std_total = np.sqrt(var_total)
+    std_residuals = (beta_out - beta * beta_exp) / std_total
+
+    # Huber weights for final variance calculation
+    weights = np.ones(n)
+    outlier_mask = np.abs(std_residuals) > k
+    weights[outlier_mask] = k / np.abs(std_residuals[outlier_mask])
+
+    # Robust variance estimator
+    precision = weights / var_total
+    var_beta = 1 / np.sum(precision * beta_exp**2)
+    se = np.sqrt(var_beta)
+
+    # Ensure positive SE
+    se = max(float(se), 1e-10)
+
+    # P-value
+    pval = 2 * stats.norm.sf(np.abs(beta / se))
+
+    return {
+        "beta": float(beta),
+        "se": se,
+        "pval": float(pval),
+        "OR": float(np.exp(beta)),
+        "OR_lci": float(np.exp(beta - 1.96 * se)),
+        "OR_uci": float(np.exp(beta + 1.96 * se)),
+        "nsnp": n,
     }

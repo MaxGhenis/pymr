@@ -11,25 +11,25 @@ PyMR aims to be the **definitive Mendelian Randomization package** - not just ma
 - [x] Weighted median
 - [x] MR-Egger
 - [x] Simple mode
+- [x] MR-PRESSO (pleiotropy residual sum and outlier)
 - [ ] Weighted mode
 - [ ] MR-RAPS (robust adjusted profile score)
-- [ ] MR-Lasso
 - [ ] Contamination mixture
 
 ### Sensitivity Analyses
 - [x] Heterogeneity (Cochran's Q, I²)
+- [x] Rucker's Q (IVW vs Egger comparison)
 - [x] Leave-one-out
-- [ ] MR-PRESSO (pleiotropy residual sum and outlier)
-- [ ] Steiger filtering (directionality test)
-- [ ] Radial MR
-- [ ] Funnel plot asymmetry
+- [x] Single SNP analysis
+- [x] Steiger filtering (directionality test)
+- [ ] Funnel plot asymmetry tests
 
 ### Data Integration
-- [ ] IEU OpenGWAS API (16,000+ GWAS)
+- [x] IEU OpenGWAS API (16,000+ GWAS)
+- [x] Local file loading
 - [ ] GWAS Catalog integration
 - [ ] Pan-UKB direct access
 - [ ] FinnGen integration
-- [x] Local file loading
 
 ### Clumping
 - [x] Distance-based pruning
@@ -38,24 +38,29 @@ PyMR aims to be the **definitive Mendelian Randomization package** - not just ma
 - [ ] Ancestry-aware clumping
 
 ### Visualization
-- [ ] Forest plots
-- [ ] Scatter plots with regression lines
-- [ ] Funnel plots
-- [ ] Leave-one-out plots
-- [ ] Radial plots
+- [x] Forest plots
+- [x] Scatter plots with regression lines
+- [x] Funnel plots
+- [x] Leave-one-out plots
+- [x] Radial plots
 
-## Phase 2: Beyond R (v0.3)
+### Multivariable MR
+- [x] MVMR-IVW
+- [x] MVMR-Egger
+- [x] MVMR-Lasso (with L1 penalization)
+- [x] Conditional F-statistics
 
 ### Bayesian MR
-```python
-# Full posterior distributions, not just point estimates
-mr = BayesianMR(data)
-posterior = mr.sample(n_samples=10000)
-posterior.plot_density()
-posterior.credible_interval(0.95)
-```
+- [x] Bayesian IVW with full posterior inference
+- [x] Bayesian Egger with intercept prior
+- [x] Robust Bayesian MR (t-distribution for outliers)
+- [x] MCMC sampling (Metropolis-Hastings)
+- [x] Convergence diagnostics (R-hat, effective sample size)
+- [x] Posterior visualization
+- [x] Bayes factors
+- [x] Model comparison (WAIC)
 
-**Why this matters**: R packages give point estimates. We give full uncertainty quantification, prior incorporation, and model comparison via Bayes factors.
+## Phase 2: Beyond R (v0.3)
 
 ### Network MR
 ```python
@@ -163,15 +168,19 @@ portfolio = optimize_interventions(
 | Capability | TwoSampleMR | MendelianRandomization | PyMR |
 |------------|-------------|------------------------|------|
 | Point estimates | ✓ | ✓ | ✓ |
-| Full posteriors | ✗ | ✗ | ✓ |
-| Network MR | Limited | ✗ | ✓ |
-| Natural language | ✗ | ✗ | ✓ |
-| GPU acceleration | ✗ | ✗ | ✓ |
-| Interactive dashboard | ✗ | ✗ | ✓ |
-| QALY integration | ✗ | ✗ | ✓ |
-| Auto-validation | ✗ | ✗ | ✓ |
+| Full posteriors (Bayesian) | ✗ | ✗ | **✓** |
+| Multivariable MR | ✓ | ✓ | **✓** |
+| MR-PRESSO | ✓ | ✗ | **✓** |
+| OpenGWAS API | ✓ | ✗ | **✓** |
+| Publication-ready plots | ✓ | ✓ | **✓** |
+| Network MR | Limited | ✗ | Planned |
+| Natural language | ✗ | ✗ | Planned |
+| GPU acceleration | ✗ | ✗ | Planned |
+| Interactive dashboard | ✗ | ✗ | Planned |
+| QALY integration | ✗ | ✗ | Planned |
+| Auto-validation | ✗ | ✗ | Planned |
 | No PLINK needed | ✗ | ✓ | ✓ |
-| Python ecosystem | ✗ | ✗ | ✓ |
+| Python ecosystem | ✗ | ✗ | **✓** |
 
 ## Timeline
 

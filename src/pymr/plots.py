@@ -216,6 +216,8 @@ def funnel_plot(
     ax: Axes | None = None,
     point_color: str = "#A23B72",
     line_color: str = "#2E86AB",
+    show_contours: bool = False,
+    show_asymmetry_test: bool = False,
 ) -> Figure:
     """Create funnel plot for assessing publication bias.
 
@@ -227,6 +229,8 @@ def funnel_plot(
         ax: Optional matplotlib Axes. If None, creates new figure.
         point_color: Color for SNP points (default: "#A23B72")
         line_color: Color for IVW estimate line (default: "#2E86AB")
+        show_contours: Show significance contour lines (p=0.05, 0.01)
+        show_asymmetry_test: Show Egger's asymmetry test results in legend
 
     Returns:
         matplotlib Figure object
@@ -234,6 +238,8 @@ def funnel_plot(
     Example:
         >>> fig = funnel_plot(harmonized)
         >>> fig.savefig("funnel.png", dpi=300, bbox_inches="tight")
+        >>> # With asymmetry test
+        >>> fig = funnel_plot(harmonized, show_asymmetry_test=True)
 
     """
     if ax is None:
@@ -303,6 +309,44 @@ def funnel_plot(
         alpha=0.1,
         label="95% CI region",
     )
+
+    # Add significance contours if requested
+    if show_contours:
+        # Create contour lines for p=0.05 and p=0.01
+        for z_score, alpha, label in [(1.96, 0.3, "p=0.05"), (2.576, 0.2, "p=0.01")]:
+            contour_width = z_score / y_range
+            ax.plot(
+                beta_ivw - contour_width,
+                y_range,
+                ":",
+                color="gray",
+                alpha=alpha,
+                linewidth=1,
+            )
+            ax.plot(
+                beta_ivw + contour_width,
+                y_range,
+                ":",
+                color="gray",
+                alpha=alpha,
+                linewidth=1,
+                label=label,
+            )
+
+    # Add asymmetry test results if requested
+    if show_asymmetry_test and len(beta_exp) >= 3:
+        from pymr.sensitivity import funnel_asymmetry
+
+        try:
+            asym_result = funnel_asymmetry(beta_exp, se_exp, beta_out, se_out)
+            # Add result to legend
+            asym_text = (
+                f"Asymmetry test: p={asym_result['intercept_pval']:.3f}"
+            )
+            ax.plot([], [], " ", label=asym_text)  # Invisible line for legend entry
+        except (ValueError, np.linalg.LinAlgError):
+            # Skip if test fails
+            pass
 
     # Customize axes
     ax.set_xlabel("Per-SNP causal estimate (Wald ratio)", fontweight="bold")

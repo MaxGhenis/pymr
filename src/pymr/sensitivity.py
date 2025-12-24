@@ -278,3 +278,222 @@ def single_snp(
         "OR_lci": np.exp(beta - 1.96 * se),
         "OR_uci": np.exp(beta + 1.96 * se),
     })
+
+
+def funnel_asymmetry(
+    beta_exp: NDArray[np.floating[Any]],
+    se_exp: NDArray[np.floating[Any]],
+    beta_out: NDArray[np.floating[Any]],
+    se_out: NDArray[np.floating[Any]],
+) -> dict[str, float | str]:
+    """Funnel plot asymmetry test (Egger's test for publication bias).
+
+    Tests for small-study effects by regressing the standardized effect
+    (Wald ratio) against its standard error. A significant intercept
+    suggests asymmetry, which may indicate publication bias or pleiotropy.
+
+    This is analogous to Egger's regression test but specifically for
+    detecting funnel plot asymmetry.
+
+    Args:
+        beta_exp: Effect sizes for exposure
+        se_exp: Standard errors for exposure
+        beta_out: Effect sizes for outcome
+        se_out: Standard errors for outcome
+
+    Returns:
+        Dictionary with:
+            - intercept: Regression intercept (bias estimate)
+            - intercept_se: Standard error of intercept
+            - intercept_pval: P-value for intercept != 0
+            - slope: Regression slope
+            - slope_se: Standard error of slope
+            - interpretation: Text interpretation of results
+
+    Raises:
+        ValueError: If fewer than 3 SNPs provided
+
+    Reference:
+        Egger M, et al. (1997). Bias in meta-analysis detected by a simple,
+        graphical test. BMJ, 315(7109):629-634.
+    """
+    n = len(beta_exp)
+
+    if n < 3:
+        msg = "Funnel asymmetry test requires at least 3 SNPs"
+        raise ValueError(msg)
+
+    # Compute Wald ratios (effect estimates)
+    wald_ratio = beta_out / beta_exp
+    wald_se = np.abs(se_out / beta_exp)
+
+    # Egger regression: regress effect estimate against standard error
+    # Model: wald_ratio = intercept + slope * wald_se + error
+    # Use weighted least squares with weights = 1/wald_se
+    weights = 1 / wald_se
+
+    # Weighted regression
+    X = np.column_stack([np.ones(n), wald_se])
+    W = np.diag(weights)
+
+    # Weighted least squares: (X'WX)^-1 X'Wy
+    XtWX = X.T @ W @ X
+    XtWy = X.T @ W @ wald_ratio
+
+    try:
+        params = np.linalg.solve(XtWX, XtWy)
+    except np.linalg.LinAlgError as e:
+        msg = "Failed to compute regression (singular matrix)"
+        raise ValueError(msg) from e
+
+    intercept, slope = params
+
+    # Compute standard errors
+    residuals = wald_ratio - (intercept + slope * wald_se)
+    rss = np.sum(weights * residuals**2)  # Weighted residual sum of squares
+    df = n - 2
+
+    # Variance-covariance matrix
+    var_covar = rss / df * np.linalg.inv(XtWX)
+    se_params = np.sqrt(np.diag(var_covar))
+    intercept_se, slope_se = se_params
+
+    # Test intercept = 0 (asymmetry test)
+    t_stat = intercept / intercept_se
+    intercept_pval = 2 * stats.t.sf(np.abs(t_stat), df)
+
+    # Interpretation
+    if intercept_pval < 0.05:
+        interpretation = (
+            f"Evidence of funnel plot asymmetry (p={intercept_pval:.3f}). "
+            "This suggests potential small-study effects, publication bias, "
+            "or pleiotropy."
+        )
+    else:
+        interpretation = (
+            f"No evidence of funnel plot asymmetry (p={intercept_pval:.3f}). "
+            "Funnel plot appears symmetric."
+        )
+
+    return {
+        "intercept": float(intercept),
+        "intercept_se": float(intercept_se),
+        "intercept_pval": float(intercept_pval),
+        "slope": float(slope),
+        "slope_se": float(slope_se),
+        "interpretation": interpretation,
+    }
+
+
+def radial_mr(
+    beta_exp: NDArray[np.floating[Any]],
+    se_exp: NDArray[np.floating[Any]],
+    beta_out: NDArray[np.floating[Any]],
+    se_out: NDArray[np.floating[Any]],
+    method: str = "IVW",
+    alpha: float = 0.05,
+) -> dict[str, Any]:
+    """Radial MR analysis with outlier detection.
+
+    Performs radial (Galbraith plot) regression to detect outlier SNPs
+    using Cochran's Q statistic contribution. Supports both IVW and
+    MR-Egger radial regression.
+
+    Args:
+        beta_exp: Effect sizes for exposure
+        se_exp: Standard errors for exposure
+        beta_out: Effect sizes for outcome
+        se_out: Standard errors for outcome
+        method: Regression method ("IVW" or "Egger")
+        alpha: Significance level for outlier detection (default: 0.05)
+
+    Returns:
+        Dictionary with:
+            - beta: Causal effect estimate
+            - se: Standard error
+            - intercept: Intercept (Egger only)
+            - weights: Radial weights for each SNP
+            - Q_total: Total Cochran's Q statistic
+            - Q_contribution: Q contribution per SNP
+            - Q_outliers: Q statistic after removing outliers
+            - outlier_indices: Array of outlier SNP indices
+            - n_outliers: Number of outliers detected
+
+    Reference:
+        Bowden J, et al. (2018). Improving the visualization, interpretation
+        and analysis of two-sample summary data Mendelian randomization via
+        the Radial plot and Radial regression. Int J Epidemiol, 47(6):2100-2114.
+    """
+    from pymr.methods import ivw, mr_egger
+
+    # Compute radial transformation
+    # Wald ratios and their standard errors
+    wald_ratio = beta_out / beta_exp
+    wald_se = np.abs(se_out / beta_exp)
+
+    # Radial weights: inverse variance of Wald ratio
+    weights = 1 / wald_se**2
+
+    # Perform radial regression
+    if method == "IVW":
+        # IVW: weighted regression through origin
+        result = ivw(beta_exp, se_exp, beta_out, se_out)
+        beta_mr = result["beta"]
+        se_mr = result["se"]
+        intercept = None
+    elif method == "Egger":
+        # Egger: weighted regression with intercept
+        result = mr_egger(beta_exp, se_exp, beta_out, se_out)
+        beta_mr = result["beta"]
+        se_mr = result["se"]
+        intercept = result["intercept"]
+    else:
+        msg = f"Unknown method: {method}. Use 'IVW' or 'Egger'"
+        raise ValueError(msg)
+
+    # Compute Q statistic and individual contributions
+    q_result = cochrans_q(beta_exp, se_exp, beta_out, se_out, beta_mr)
+    q_total = q_result["Q"]
+
+    # Individual Q contributions (squared residuals weighted)
+    q_contribution = weights * (wald_ratio - beta_mr) ** 2
+
+    # Detect outliers: SNPs whose Q contribution exceeds chi-square threshold
+    # Use chi-square(1) distribution for individual contributions
+    threshold = float(stats.chi2.ppf(1 - alpha, df=1))
+    outlier_mask = q_contribution > threshold
+    outlier_indices = np.where(outlier_mask)[0]
+
+    # Q statistic after removing outliers
+    if len(outlier_indices) > 0:
+        # Recompute with outliers removed
+        mask = ~outlier_mask
+        if np.sum(mask) >= 2:  # Need at least 2 SNPs
+            q_no_outliers = cochrans_q(
+                beta_exp[mask],
+                se_exp[mask],
+                beta_out[mask],
+                se_out[mask],
+                beta_mr,
+            )
+            q_outliers = q_no_outliers["Q"]
+        else:
+            q_outliers = 0.0
+    else:
+        q_outliers = q_total
+
+    output = {
+        "beta": beta_mr,
+        "se": se_mr,
+        "weights": weights,
+        "Q_total": q_total,
+        "Q_contribution": q_contribution,
+        "Q_outliers": float(q_outliers),
+        "outlier_indices": outlier_indices,
+        "n_outliers": len(outlier_indices),
+    }
+
+    if intercept is not None:
+        output["intercept"] = intercept
+
+    return output
