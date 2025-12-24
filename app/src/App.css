@@ -146,6 +146,30 @@ body {
   color: var(--blue-600);
 }
 
+/* Plain English Explanations */
+.plain-english {
+  background: var(--gray-50);
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.plain-english h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  color: var(--gray-800);
+}
+
+.plain-english p {
+  margin: 0 0 0.75rem;
+  color: var(--gray-700);
+  line-height: 1.7;
+}
+
+.plain-english p:last-child {
+  margin-bottom: 0;
+}
+
 /* Key Insight Box */
 .key-insight {
   display: flex;
@@ -291,6 +315,50 @@ body {
   margin: 0;
   font-size: 0.9rem;
   color: var(--gray-600);
+}
+
+.assumptions-intro {
+  margin-bottom: 1rem;
+  color: var(--gray-600);
+}
+
+/* Glossary */
+.glossary {
+  background: var(--gray-50);
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin: 2rem 0;
+}
+
+.glossary h3 {
+  margin: 0 0 1rem;
+  color: var(--gray-800);
+}
+
+.term-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.term {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--gray-200);
+}
+
+.term h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: var(--blue-600);
+}
+
+.term p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--gray-600);
+  line-height: 1.5;
 }
 
 /* Interactive Demo */
