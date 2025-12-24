@@ -648,6 +648,28 @@ body {
   color: var(--blue-600);
 }
 
+/* Feature Comparison */
+.feature-comparison {
+  margin-top: 2rem;
+}
+
+.feature-comparison h3 {
+  margin-bottom: 1rem;
+  color: var(--gray-700);
+}
+
+.feature-yes {
+  color: var(--green-500);
+}
+
+.feature-no {
+  color: var(--red-500);
+}
+
+.feature-partial {
+  color: var(--amber-500);
+}
+
 /* Code Examples */
 .examples-grid {
   display: flex;

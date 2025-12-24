@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import * as Tabs from '@radix-ui/react-tabs'
-import { Dna, GitBranch, Target, BarChart3, Code, BookOpen } from 'lucide-react'
+import { Dna, GitBranch, Target, BarChart3, BookOpen } from 'lucide-react'
 import { MRDiagram } from './components/MRDiagram'
 import { InteractiveDemo } from './components/InteractiveDemo'
 import { MethodsComparison } from './components/MethodsComparison'
-import { CodeExamples } from './components/CodeExamples'
 import './App.css'
 
 function App() {
@@ -37,10 +36,6 @@ function App() {
             <Tabs.Trigger value="methods" className="tab-trigger">
               <BarChart3 size={18} />
               <span>Methods</span>
-            </Tabs.Trigger>
-            <Tabs.Trigger value="code" className="tab-trigger">
-              <Code size={18} />
-              <span>Code Examples</span>
             </Tabs.Trigger>
           </Tabs.List>
 
@@ -174,10 +169,6 @@ function App() {
 
               <Tabs.Content value="methods" className="tab-content">
                 <MethodsComparison />
-              </Tabs.Content>
-
-              <Tabs.Content value="code" className="tab-content">
-                <CodeExamples />
               </Tabs.Content>
             </motion.div>
           </AnimatePresence>

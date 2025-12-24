@@ -1,5 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { Check, AlertTriangle } from 'lucide-react'
+import { Check, AlertTriangle, X, Minus } from 'lucide-react'
 
 const methods = [
   {
@@ -163,6 +163,146 @@ export function MethodsComparison() {
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <div className="feature-comparison">
+        <h3>PyMR vs R Packages</h3>
+        <p className="intro" style={{ marginBottom: '1rem' }}>
+          PyMR aims for feature parity with the major R MR packages while providing a native Python experience.
+        </p>
+        <table className="decision-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>PyMR</th>
+              <th>TwoSampleMR (R)</th>
+              <th>MendelianRandomization (R)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colSpan={4}><strong>Core Methods</strong></td></tr>
+            <tr>
+              <td>IVW</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+            </tr>
+            <tr>
+              <td>Weighted Median</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+            </tr>
+            <tr>
+              <td>MR-Egger</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+            </tr>
+            <tr>
+              <td>Mode-based</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+            </tr>
+            <tr>
+              <td>MR-PRESSO</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><X size={16} className="feature-no" /></td>
+            </tr>
+            <tr>
+              <td>MR-RAPS</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><X size={16} className="feature-no" /></td>
+            </tr>
+            <tr>
+              <td>Contamination Mixture</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><X size={16} className="feature-no" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+            </tr>
+            <tr>
+              <td>Bayesian MR</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><X size={16} className="feature-no" /></td>
+              <td><X size={16} className="feature-no" /></td>
+            </tr>
+            <tr><td colSpan={4}><strong>Data Sources</strong></td></tr>
+            <tr>
+              <td>IEU OpenGWAS</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><X size={16} className="feature-no" /></td>
+            </tr>
+            <tr>
+              <td>Pan-UKB</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><X size={16} className="feature-no" /></td>
+              <td><X size={16} className="feature-no" /></td>
+            </tr>
+            <tr>
+              <td>GWAS Catalog</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><X size={16} className="feature-no" /></td>
+              <td><X size={16} className="feature-no" /></td>
+            </tr>
+            <tr>
+              <td>FinnGen</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><X size={16} className="feature-no" /></td>
+              <td><X size={16} className="feature-no" /></td>
+            </tr>
+            <tr><td colSpan={4}><strong>Sensitivity Analysis</strong></td></tr>
+            <tr>
+              <td>Cochran's Q / Heterogeneity</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+            </tr>
+            <tr>
+              <td>Leave-one-out</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+            </tr>
+            <tr>
+              <td>Steiger Filtering</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><X size={16} className="feature-no" /></td>
+            </tr>
+            <tr>
+              <td>Radial MR</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><X size={16} className="feature-no" /></td>
+              <td><X size={16} className="feature-no" /></td>
+            </tr>
+            <tr><td colSpan={4}><strong>Other</strong></td></tr>
+            <tr>
+              <td>LD Clumping</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><X size={16} className="feature-no" /></td>
+            </tr>
+            <tr>
+              <td>Multivariable MR</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+            </tr>
+            <tr>
+              <td>Visualization</td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Check size={16} className="feature-yes" /></td>
+              <td><Minus size={16} className="feature-partial" /></td>
+            </tr>
+          </tbody>
+        </table>
+        <p className="table-note">
+          PyMR provides broader data source integration than either R package, plus Bayesian methods not available elsewhere.
+        </p>
       </div>
     </section>
   )
