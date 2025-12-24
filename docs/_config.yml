@@ -25,14 +25,6 @@ sphinx:
       use_repository_button: true
       use_issues_button: true
       use_edit_page_button: true
-    autodoc_default_options:
-      members: true
-      undoc-members: true
-      show-inheritance: true
-  extra_extensions:
-    - sphinx.ext.autodoc
-    - sphinx.ext.napoleon
-    - sphinx_autodoc2
 
 parse:
   myst_enable_extensions:

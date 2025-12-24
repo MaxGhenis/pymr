@@ -27,7 +27,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install "jupyter-book<2" sphinx-autodoc2 myst-nb sphinx-book-theme
+          pip install "jupyter-book<2" myst-nb sphinx-book-theme
           pip install -e .
 
       - name: Build book
