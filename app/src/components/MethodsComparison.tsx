@@ -1,4 +1,4 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Check, AlertTriangle } from 'lucide-react'
 
 const methods = [
@@ -80,18 +80,22 @@ export function MethodsComparison() {
       </p>
 
       <div className="methods-chart">
-        <h4>Method Characteristics</h4>
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={chartData} layout="vertical" margin={{ left: 80 }}>
+        <h4>Method Characteristics (1-5 scale)</h4>
+        <ResponsiveContainer width="100%" height={280}>
+          <BarChart data={chartData} layout="vertical" margin={{ left: 80, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" domain={[0, 5]} />
+            <XAxis type="number" domain={[0, 5]} tickCount={6} label={{ value: 'Rating (1=Low, 5=High)', position: 'bottom', offset: 0 }} />
             <YAxis type="category" dataKey="name" />
             <Tooltip />
-            <Bar dataKey="robustness" name="Robustness" fill="#10B981" />
-            <Bar dataKey="power" name="Power" fill="#3B82F6" />
+            <Legend verticalAlign="top" wrapperStyle={{ paddingBottom: 10 }} />
+            <Bar dataKey="robustness" name="Robustness to Pleiotropy" fill="#10B981" />
+            <Bar dataKey="power" name="Statistical Power" fill="#3B82F6" />
             <Bar dataKey="complexity" name="Complexity" fill="#F59E0B" />
           </BarChart>
         </ResponsiveContainer>
+        <p className="table-note">
+          Robustness = how well the method handles invalid instruments; Power = ability to detect true effects; Complexity = computational/interpretive difficulty.
+        </p>
       </div>
 
       <div className="methods-grid">
