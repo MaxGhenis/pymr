@@ -27,6 +27,9 @@ from pymr.api import (
     gwas_catalog_search,
     gwas_catalog_get_study,
     gwas_catalog_get_associations,
+    finngen_list_phenotypes,
+    finngen_search,
+    finngen_load_gwas,
 )
 from pymr.sensitivity import (
     steiger_filtering,
@@ -38,6 +41,7 @@ from pymr.sensitivity import (
 )
 from pymr.multivariable import MultivariableMR, mvmr_ivw
 from pymr.bayesian import BayesianMR
+from pymr.clumping import ld_clump, get_ld_matrix
 
 __version__ = "0.1.0"
 __all__ = [
@@ -64,6 +68,9 @@ __all__ = [
     "gwas_catalog_search",
     "gwas_catalog_get_study",
     "gwas_catalog_get_associations",
+    "finngen_list_phenotypes",
+    "finngen_search",
+    "finngen_load_gwas",
     "steiger_filtering",
     "cochrans_q",
     "rucker_q",
@@ -73,4 +80,6 @@ __all__ = [
     "MultivariableMR",
     "mvmr_ivw",
     "BayesianMR",
+    "ld_clump",
+    "get_ld_matrix",
 ]

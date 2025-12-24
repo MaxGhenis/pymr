@@ -898,3 +898,230 @@ class TestGWASCatalogGetAssociations:
         # Assert
         assert len(result) == 25
         assert mock_get.call_count == 2
+
+
+class TestFinnGenFunctions:
+    """Test FinnGen R12 GWAS data access functions (TDD - tests written first)."""
+
+    @patch("pymr.api.requests.get")
+    def test_finngen_list_phenotypes(self, mock_get):
+        """finngen_list_phenotypes should return DataFrame of available phenotypes."""
+        # Arrange: Mock FinnGen manifest response
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = [
+            {
+                "phenocode": "T2D",
+                "phenostring": "Type 2 diabetes",
+                "category": "Endocrine",
+                "num_cases": 18217,
+                "num_controls": 338468,
+                "num_gw_significant": 125,
+            },
+            {
+                "phenocode": "I9_CHD",
+                "phenostring": "Coronary heart disease",
+                "category": "Circulatory system",
+                "num_cases": 29123,
+                "num_controls": 327562,
+                "num_gw_significant": 89,
+            },
+            {
+                "phenocode": "C3_BREAST",
+                "phenostring": "Breast cancer",
+                "category": "Neoplasms",
+                "num_cases": 8246,
+                "num_controls": 348439,
+                "num_gw_significant": 34,
+            },
+        ]
+        mock_get.return_value = mock_response
+
+        # Act
+        from pymr.api import finngen_list_phenotypes
+        result = finngen_list_phenotypes()
+
+        # Assert
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) == 3
+        assert "phenocode" in result.columns
+        assert "phenostring" in result.columns
+        assert "category" in result.columns
+        assert "num_cases" in result.columns
+        assert "num_controls" in result.columns
+        assert "T2D" in result["phenocode"].values
+        # Should have called FinnGen API
+        mock_get.assert_called_once()
+        call_args = mock_get.call_args[0][0]
+        assert "r12.finngen.fi" in call_args or "finngen.fi" in call_args
+
+    @patch("pymr.api.requests.get")
+    def test_finngen_search(self, mock_get):
+        """finngen_search should search phenotypes by keyword."""
+        # Arrange: Mock manifest response
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = [
+            {
+                "phenocode": "T2D",
+                "phenostring": "Type 2 diabetes",
+                "category": "Endocrine",
+                "num_cases": 18217,
+                "num_controls": 338468,
+                "num_gw_significant": 125,
+            },
+            {
+                "phenocode": "T1D",
+                "phenostring": "Type 1 diabetes",
+                "category": "Endocrine",
+                "num_cases": 5253,
+                "num_controls": 351432,
+                "num_gw_significant": 67,
+            },
+            {
+                "phenocode": "I9_CHD",
+                "phenostring": "Coronary heart disease",
+                "category": "Circulatory system",
+                "num_cases": 29123,
+                "num_controls": 327562,
+                "num_gw_significant": 89,
+            },
+        ]
+        mock_get.return_value = mock_response
+
+        # Act
+        from pymr.api import finngen_search
+        result = finngen_search("diabetes")
+
+        # Assert
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) >= 2  # Should find T1D and T2D
+        assert any("diabetes" in str(s).lower() for s in result["phenostring"].values)
+        # Should NOT find coronary heart disease
+        assert all("coronary" not in str(s).lower() for s in result["phenostring"].values)
+
+    @patch("pymr.api.requests.get")
+    def test_finngen_search_case_insensitive(self, mock_get):
+        """finngen_search should be case-insensitive."""
+        # Arrange
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = [
+            {
+                "phenocode": "T2D",
+                "phenostring": "Type 2 diabetes",
+                "category": "Endocrine",
+                "num_cases": 18217,
+                "num_controls": 338468,
+                "num_gw_significant": 125,
+            },
+        ]
+        mock_get.return_value = mock_response
+
+        # Act
+        from pymr.api import finngen_search
+        result = finngen_search("DIABETES")  # Uppercase
+
+        # Assert
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) >= 1
+
+    @patch("pymr.api.requests.get")
+    def test_finngen_load_gwas_basic(self, mock_get):
+        """finngen_load_gwas should load GWAS summary statistics for a phenotype."""
+        # Arrange: Mock responses for manifest and GWAS file
+        mock_responses = []
+
+        # First call: manifest
+        manifest_response = Mock()
+        manifest_response.status_code = 200
+        manifest_response.json.return_value = [
+            {
+                "phenocode": "T2D",
+                "phenostring": "Type 2 diabetes",
+                "category": "Endocrine",
+                "num_cases": 18217,
+                "num_controls": 338468,
+                "num_gw_significant": 125,
+            },
+        ]
+        mock_responses.append(manifest_response)
+
+        # Second call: GWAS summary stats (JSON format)
+        gwas_response = Mock()
+        gwas_response.status_code = 200
+        gwas_response.json.return_value = {
+            "data": [
+                {
+                    "variant": "1:100000:A:G",
+                    "rsid": "rs123",
+                    "chromosome": "1",
+                    "position": 100000,
+                    "ref": "A",
+                    "alt": "G",
+                    "beta": 0.05,
+                    "sebeta": 0.01,
+                    "pval": 1.2e-8,
+                    "maf": 0.3,
+                    "maf_cases": 0.35,
+                    "maf_controls": 0.29,
+                },
+                {
+                    "variant": "2:200000:C:T",
+                    "rsid": "rs456",
+                    "chromosome": "2",
+                    "position": 200000,
+                    "ref": "C",
+                    "alt": "T",
+                    "beta": 0.08,
+                    "sebeta": 0.02,
+                    "pval": 3.4e-10,
+                    "maf": 0.45,
+                    "maf_cases": 0.48,
+                    "maf_controls": 0.44,
+                },
+            ]
+        }
+        mock_responses.append(gwas_response)
+
+        mock_get.side_effect = mock_responses
+
+        # Act
+        from pymr.api import finngen_load_gwas
+        result = finngen_load_gwas("T2D")
+
+        # Assert
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) == 2
+        assert "rsid" in result.columns
+        assert "beta" in result.columns
+        assert "se" in result.columns
+        assert "pval" in result.columns
+        assert "chr" in result.columns
+        assert "pos" in result.columns  # FinnGen uses 'pos' after renaming
+        assert result.iloc[0]["rsid"] == "rs123"
+        assert result.iloc[0]["beta"] == 0.05
+        assert result.iloc[0]["se"] == 0.01
+
+    @patch("pymr.api.requests.get")
+    def test_finngen_load_gwas_invalid_phenotype(self, mock_get):
+        """finngen_load_gwas should raise error for invalid phenotype code."""
+        # Arrange: Mock manifest with no matching phenotype
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = [
+            {
+                "phenocode": "T2D",
+                "phenostring": "Type 2 diabetes",
+                "category": "Endocrine",
+                "num_cases": 18217,
+                "num_controls": 338468,
+                "num_gw_significant": 125,
+            },
+        ]
+        mock_get.return_value = mock_response
+
+        # Act & Assert
+        from pymr.api import finngen_load_gwas
+        with pytest.raises(ValueError, match="Phenotype code .* not found"):
+            finngen_load_gwas("INVALID_PHENO")

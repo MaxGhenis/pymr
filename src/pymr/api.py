@@ -15,11 +15,17 @@ NHGRI-EBI GWAS Catalog integration:
 - Retrieving study metadata
 - Fetching SNP associations with automatic pagination
 
+FinnGen R12 integration:
+- Listing available Finnish population phenotypes
+- Searching for phenotypes by keyword
+- Loading GWAS summary statistics for Finnish disease endpoints
+
 References:
     IEU OpenGWAS API: https://gwas-api.mrcieu.ac.uk/
     ieugwasr R package: https://mrcieu.github.io/ieugwasr/
     Pan-UKB: https://pan.ukbb.broadinstitute.org/
     GWAS Catalog API: https://www.ebi.ac.uk/gwas/rest/docs/api
+    FinnGen R12: https://r12.finngen.fi/
 """
 
 import gzip
@@ -600,3 +606,125 @@ def gwas_catalog_get_associations(study_id: str) -> pd.DataFrame:
         page += 1
 
     return pd.DataFrame(all_associations)
+
+
+# FinnGen R12 integration
+FINNGEN_API_BASE = "https://r12.finngen.fi/api"
+
+
+def finngen_list_phenotypes() -> pd.DataFrame:
+    """List all available FinnGen R12 phenotypes.
+
+    Retrieves the FinnGen R12 phenotype manifest containing information about
+    all available GWAS phenotypes from the Finnish population.
+
+    Returns:
+        DataFrame with columns including phenocode, phenostring, category,
+        num_cases, num_controls, num_gw_significant, and other metadata.
+
+    Example:
+        >>> phenotypes = finngen_list_phenotypes()
+        >>> print(phenotypes[["phenocode", "phenostring"]].head())
+
+    References:
+        FinnGen R12: https://r12.finngen.fi/
+    """
+    url = f"{FINNGEN_API_BASE}/phenos"
+    response = requests.get(url)
+    response.raise_for_status()
+
+    # Parse JSON response
+    data = response.json()
+    return pd.DataFrame(data)
+
+
+def finngen_search(query: str) -> pd.DataFrame:
+    """Search for FinnGen phenotypes by keyword.
+
+    Searches phenotype descriptions (case-insensitive) for the given query string.
+
+    Args:
+        query: Search term to look for in phenotype descriptions
+
+    Returns:
+        DataFrame with matching phenotypes
+
+    Example:
+        >>> diabetes_phenotypes = finngen_search("diabetes")
+        >>> chd = finngen_search("coronary heart")
+
+    References:
+        FinnGen R12: https://r12.finngen.fi/
+    """
+    phenotypes = finngen_list_phenotypes()
+
+    # Case-insensitive search in phenostring column
+    mask = phenotypes["phenostring"].str.contains(query, case=False, na=False)
+    return phenotypes[mask]
+
+
+def finngen_load_gwas(endpoint: str) -> pd.DataFrame:
+    """Load GWAS summary statistics for a FinnGen phenotype.
+
+    Downloads and parses GWAS summary statistics from FinnGen R12 for the
+    specified phenotype endpoint.
+
+    Args:
+        endpoint: FinnGen phenotype code (e.g., "T2D" for Type 2 diabetes)
+
+    Returns:
+        DataFrame with GWAS summary statistics including columns:
+        rsid, chr, position, ref, alt, beta, se, pval, eaf
+
+    Example:
+        >>> t2d_gwas = finngen_load_gwas("T2D")  # Type 2 diabetes
+        >>> chd_gwas = finngen_load_gwas("I9_CHD")  # Coronary heart disease
+
+    Notes:
+        FinnGen provides GWAS for the Finnish population with unique disease
+        endpoints. Files may be large depending on the number of variants.
+
+    References:
+        FinnGen R12: https://r12.finngen.fi/
+    """
+    # Verify phenotype exists in manifest
+    phenotypes = finngen_list_phenotypes()
+    pheno_info = phenotypes[phenotypes["phenocode"] == endpoint]
+
+    if len(pheno_info) == 0:
+        raise ValueError(f"Phenotype code {endpoint} not found in FinnGen manifest")
+
+    # Construct URL for GWAS data
+    url = f"{FINNGEN_API_BASE}/pheno/{endpoint}"
+
+    # Download GWAS data
+    response = requests.get(url)
+    response.raise_for_status()
+
+    # Parse JSON response
+    data = response.json()
+
+    # Extract data array from response
+    if "data" in data:
+        df = pd.DataFrame(data["data"])
+    else:
+        df = pd.DataFrame(data)
+
+    # Rename columns to standard format for compatibility with PyMR
+    # FinnGen uses: chromosome, position, rsid, ref, alt, beta, sebeta, pval, maf
+    # PyMR expects: chr, pos, rsid, ea (effect allele), nea (non-effect allele),
+    #               beta, se, pval, eaf (effect allele frequency)
+    column_mapping = {
+        "chromosome": "chr",
+        "position": "pos",
+        "alt": "ea",  # Alternative allele is effect allele
+        "ref": "nea",  # Reference allele is non-effect allele
+        "sebeta": "se",  # Standard error of beta
+        "maf": "eaf",  # Minor allele frequency as effect allele frequency
+    }
+
+    # Only rename columns that exist
+    existing_mappings = {k: v for k, v in column_mapping.items() if k in df.columns}
+    df = df.rename(columns=existing_mappings)
+
+    return df

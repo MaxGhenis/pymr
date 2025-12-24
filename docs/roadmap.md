@@ -29,11 +29,11 @@ PyMR aims to be the **definitive Mendelian Randomization package** - not just ma
 - [x] Local file loading
 - [x] GWAS Catalog integration
 - [x] Pan-UKB direct access
-- [ ] FinnGen integration
+- [x] FinnGen integration
 
 ### Clumping
 - [x] Distance-based pruning
-- [ ] LD matrix-based clumping (1000 Genomes)
+- [x] LD matrix-based clumping (1000 Genomes)
 - [ ] In-memory LD calculation
 - [ ] Ancestry-aware clumping
 
