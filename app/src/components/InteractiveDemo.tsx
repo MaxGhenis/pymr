@@ -115,7 +115,15 @@ export function InteractiveDemo() {
     <section className="section">
       <h2>Interactive MR Demo</h2>
       <p className="intro">
-        Adjust the parameters to see how different MR methods respond to pleiotropy and sample size.
+        This simulation shows how MR works in practice. Each dot represents a genetic variant (SNP).
+        For each SNP, we plot its effect on the <strong>exposure</strong> (x-axis) against its effect
+        on the <strong>outcome</strong> (y-axis).
+      </p>
+      <p className="intro">
+        If the exposure truly causes the outcome, these points should fall along a line — the slope
+        of that line is the <strong>causal effect</strong>. Red dots are "outliers" caused by pleiotropy
+        (genes affecting the outcome through other pathways). Try increasing pleiotropy to see how
+        different methods handle it.
       </p>
 
       <div className="demo-layout">

@@ -85,6 +85,20 @@ function App() {
                     </p>
                   </div>
 
+                  <div className="plain-english">
+                    <h3>The Economics Connection: Instrumental Variables</h3>
+                    <p>
+                      Economists will recognize MR as a form of <strong>instrumental variable (IV) estimation</strong>.
+                      The genetic variant is the "instrument" — it affects the outcome only through the exposure,
+                      just like how draft lottery numbers affect earnings only through military service.
+                    </p>
+                    <p>
+                      This is why MR has gained traction in economics: it's the same IV logic economists use,
+                      but with instruments that are randomly assigned by nature and measured with high precision
+                      in large biobank datasets.
+                    </p>
+                  </div>
+
                   <div className="key-insight">
                     <Target className="insight-icon" />
                     <div>
