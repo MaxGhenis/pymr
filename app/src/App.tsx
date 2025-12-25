@@ -248,7 +248,7 @@ function App() {
                         <p className="study-impact">
                           <strong>Impact:</strong> Justified weight-loss interventions and bariatric surgery for diabetes prevention.
                         </p>
-                        <a href="https://doi.org/10.1016/S2213-8587(17)30049-8" target="_blank" rel="noopener noreferrer" className="study-link">
+                        <a href="https://doi.org/10.1161/CIRCULATIONAHA.116.026560" target="_blank" rel="noopener noreferrer" className="study-link">
                           Read paper →
                         </a>
                       </div>
