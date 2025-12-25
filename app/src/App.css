@@ -792,6 +792,182 @@ body {
   font-size: 0.85rem;
 }
 
+/* History Section */
+.history-section {
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--gray-200);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-header h3 {
+  margin: 0;
+  color: var(--gray-800);
+}
+
+.section-icon {
+  color: var(--blue-500);
+  flex-shrink: 0;
+}
+
+.timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, var(--blue-500), var(--green-500));
+  border-radius: 2px;
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: 1.5rem;
+  margin-left: 1rem;
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-item .year {
+  position: absolute;
+  left: -3.5rem;
+  top: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--blue-600);
+  background: white;
+  padding: 0.25rem 0;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -1.65rem;
+  top: 0.5rem;
+  width: 10px;
+  height: 10px;
+  background: var(--blue-500);
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 0 2px var(--blue-500);
+}
+
+.timeline-content {
+  background: var(--gray-50);
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  border-left: 3px solid var(--blue-400);
+}
+
+.timeline-content h4 {
+  margin: 0 0 0.5rem;
+  color: var(--gray-800);
+  font-size: 1rem;
+}
+
+.timeline-content p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--gray-600);
+  line-height: 1.6;
+}
+
+/* Landmark Studies */
+.landmark-studies {
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--gray-200);
+}
+
+.studies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.study-card {
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  padding: 1.25rem;
+  position: relative;
+  transition: box-shadow 0.2s;
+}
+
+.study-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.study-finding {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.75rem;
+}
+
+.study-finding.positive {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.study-finding.negative {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+.study-card h4 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  color: var(--gray-800);
+}
+
+.study-desc {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: var(--gray-600);
+  line-height: 1.5;
+}
+
+.study-impact {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--gray-100);
+}
+
+.study-impact strong {
+  color: var(--blue-600);
+}
+
+/* Methods Summary Table */
+.methods-summary {
+  margin-bottom: 2rem;
+}
+
+.methods-summary h4 {
+  margin: 0 0 1rem;
+  color: var(--gray-700);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .header {
@@ -825,5 +1001,23 @@ body {
   .diagram-legend {
     flex-direction: column;
     align-items: center;
+  }
+
+  .timeline {
+    padding-left: 1rem;
+  }
+
+  .timeline-item .year {
+    position: static;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .timeline-item {
+    margin-left: 0.5rem;
+  }
+
+  .studies-grid {
+    grid-template-columns: 1fr;
   }
 }

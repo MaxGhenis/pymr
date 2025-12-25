@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import * as Tabs from '@radix-ui/react-tabs'
-import { Dna, GitBranch, Target, BarChart3, BookOpen } from 'lucide-react'
+import { Dna, GitBranch, Target, BarChart3, BookOpen, History, FlaskConical } from 'lucide-react'
 import { MRDiagram } from './components/MRDiagram'
 import { InteractiveDemo } from './components/InteractiveDemo'
 import { MethodsComparison } from './components/MethodsComparison'
@@ -157,6 +157,140 @@ function App() {
                         <span className="number">3</span>
                         <h4>Exclusion</h4>
                         <p>The variants should only affect the outcome through the exposure, not via other pathways (no pleiotropy)</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="history-section">
+                    <div className="section-header">
+                      <History className="section-icon" />
+                      <h3>History of Mendelian Randomization</h3>
+                    </div>
+                    <div className="timeline">
+                      <div className="timeline-item">
+                        <span className="year">1986</span>
+                        <div className="timeline-content">
+                          <h4>The Birth of MR</h4>
+                          <p>
+                            Martijn Katan proposed the core idea in a letter to <em>The Lancet</em>. He suggested using
+                            genetic variants in the <strong>APOE gene</strong> (which affects cholesterol) to test whether
+                            cholesterol truly causes cancer — rather than relying on confounded observational studies.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="timeline-item">
+                        <span className="year">2003</span>
+                        <div className="timeline-content">
+                          <h4>The Name is Coined</h4>
+                          <p>
+                            George Davey Smith and Shah Ebrahim formally named the approach "Mendelian randomization"
+                            and laid out its statistical framework, connecting it to Mendel's laws of inheritance
+                            and the random assortment of alleles.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="timeline-item">
+                        <span className="year">2007-2010</span>
+                        <div className="timeline-content">
+                          <h4>GWAS Revolution</h4>
+                          <p>
+                            Genome-wide association studies (GWAS) began identifying thousands of genetic variants
+                            linked to traits. This gave MR researchers many more "instruments" to work with,
+                            dramatically expanding what questions could be answered.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="timeline-item">
+                        <span className="year">2015+</span>
+                        <div className="timeline-content">
+                          <h4>Two-Sample MR & Biobanks</h4>
+                          <p>
+                            Methods for combining GWAS summary statistics enabled "two-sample MR" — using different
+                            studies for exposure and outcome. UK Biobank (500,000 participants) and other large
+                            cohorts made MR a standard tool in epidemiology.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="landmark-studies">
+                    <div className="section-header">
+                      <FlaskConical className="section-icon" />
+                      <h3>Landmark MR Studies</h3>
+                    </div>
+                    <p className="intro">
+                      These influential studies shaped our understanding of disease causation and informed drug development:
+                    </p>
+                    <div className="studies-grid">
+                      <div className="study-card">
+                        <div className="study-finding positive">Causal</div>
+                        <h4>LDL Cholesterol → Heart Disease</h4>
+                        <p className="study-desc">
+                          MR confirmed that LDL cholesterol <strong>causes</strong> coronary heart disease,
+                          validating statins as a treatment. Effect sizes matched statin trial results,
+                          strengthening confidence in the causal claim.
+                        </p>
+                        <p className="study-impact">
+                          <strong>Impact:</strong> Supported development of PCSK9 inhibitors and other LDL-lowering drugs.
+                        </p>
+                      </div>
+                      <div className="study-card">
+                        <div className="study-finding positive">Causal</div>
+                        <h4>BMI → Type 2 Diabetes</h4>
+                        <p className="study-desc">
+                          Using hundreds of obesity-related SNPs, MR showed that higher BMI <strong>causally increases</strong>{' '}
+                          diabetes risk by ~70% per SD increase in BMI — not just correlation from shared lifestyle factors.
+                        </p>
+                        <p className="study-impact">
+                          <strong>Impact:</strong> Justified weight-loss interventions and bariatric surgery for diabetes prevention.
+                        </p>
+                      </div>
+                      <div className="study-card">
+                        <div className="study-finding negative">Not Causal</div>
+                        <h4>HDL Cholesterol → Heart Disease</h4>
+                        <p className="study-desc">
+                          Despite strong observational correlations, MR found <strong>no causal effect</strong> of
+                          HDL ("good cholesterol") on heart disease. Raising HDL doesn't prevent heart attacks.
+                        </p>
+                        <p className="study-impact">
+                          <strong>Impact:</strong> Explained why HDL-raising drugs (like torcetrapib) failed in clinical trials.
+                        </p>
+                      </div>
+                      <div className="study-card">
+                        <div className="study-finding negative">Harmful</div>
+                        <h4>Alcohol → Health</h4>
+                        <p className="study-desc">
+                          MR using <em>ADH1B</em> and <em>ALDH2</em> variants showed that alcohol provides <strong>no
+                          cardiovascular benefit</strong> and likely increases blood pressure and stroke risk —
+                          overturning the "J-curve" hypothesis.
+                        </p>
+                        <p className="study-impact">
+                          <strong>Impact:</strong> Changed public health messaging; no "safe" level of alcohol for heart health.
+                        </p>
+                      </div>
+                      <div className="study-card">
+                        <div className="study-finding positive">Causal</div>
+                        <h4>Education → Health Outcomes</h4>
+                        <p className="study-desc">
+                          MR found that more years of education <strong>causally reduces</strong> risk of heart disease,
+                          diabetes, and depression — beyond just the correlation with socioeconomic status.
+                        </p>
+                        <p className="study-impact">
+                          <strong>Impact:</strong> Supported education policy as a public health intervention.
+                        </p>
+                      </div>
+                      <div className="study-card">
+                        <div className="study-finding positive">Causal</div>
+                        <h4>IL-6 → Coronary Heart Disease</h4>
+                        <p className="study-desc">
+                          MR validated <strong>interleukin-6</strong> as a causal driver of heart disease,
+                          supporting anti-inflammatory approaches. The CANTOS trial later confirmed this with
+                          an IL-1β inhibitor.
+                        </p>
+                        <p className="study-impact">
+                          <strong>Impact:</strong> Opened a new therapeutic avenue: anti-inflammatory drugs for heart disease.
+                        </p>
                       </div>
                     </div>
                   </div>
