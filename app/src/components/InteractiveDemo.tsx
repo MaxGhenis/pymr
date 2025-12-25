@@ -134,6 +134,11 @@ export function InteractiveDemo() {
         along a line through the origin — the slope is the causal effect (β<sub>outcome</sub>/β<sub>exposure</sub>).
         Red dots are pleiotropic outliers. Try increasing pleiotropy to see how methods differ.
       </p>
+      <p className="intro">
+        <strong>Data requirements:</strong> Each SNP needs four values from GWAS summary statistics: β and SE
+        for both exposure and outcome. The standard errors are essential — they're used for inverse-variance
+        weighting, giving more precise estimates greater influence.
+      </p>
 
       <div className="demo-layout">
         <div className="controls">

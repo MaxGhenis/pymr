@@ -234,6 +234,9 @@ function App() {
                         <p className="study-impact">
                           <strong>Impact:</strong> Supported development of PCSK9 inhibitors and other LDL-lowering drugs.
                         </p>
+                        <a href="https://doi.org/10.1001/jama.2017.0972" target="_blank" rel="noopener noreferrer" className="study-link">
+                          Read paper →
+                        </a>
                       </div>
                       <div className="study-card">
                         <div className="study-finding positive">Causal</div>
@@ -245,6 +248,9 @@ function App() {
                         <p className="study-impact">
                           <strong>Impact:</strong> Justified weight-loss interventions and bariatric surgery for diabetes prevention.
                         </p>
+                        <a href="https://doi.org/10.1016/S2213-8587(17)30049-8" target="_blank" rel="noopener noreferrer" className="study-link">
+                          Read paper →
+                        </a>
                       </div>
                       <div className="study-card">
                         <div className="study-finding negative">Not Causal</div>
@@ -256,6 +262,9 @@ function App() {
                         <p className="study-impact">
                           <strong>Impact:</strong> Explained why HDL-raising drugs (like torcetrapib) failed in clinical trials.
                         </p>
+                        <a href="https://doi.org/10.1016/S0140-6736(12)60312-2" target="_blank" rel="noopener noreferrer" className="study-link">
+                          Read paper →
+                        </a>
                       </div>
                       <div className="study-card">
                         <div className="study-finding negative">Harmful</div>
@@ -268,6 +277,9 @@ function App() {
                         <p className="study-impact">
                           <strong>Impact:</strong> Changed public health messaging; no "safe" level of alcohol for heart health.
                         </p>
+                        <a href="https://doi.org/10.1016/S0140-6736(18)31772-0" target="_blank" rel="noopener noreferrer" className="study-link">
+                          Read paper →
+                        </a>
                       </div>
                       <div className="study-card">
                         <div className="study-finding positive">Causal</div>
@@ -279,6 +291,9 @@ function App() {
                         <p className="study-impact">
                           <strong>Impact:</strong> Supported education policy as a public health intervention.
                         </p>
+                        <a href="https://doi.org/10.1136/bmj.k3016" target="_blank" rel="noopener noreferrer" className="study-link">
+                          Read paper →
+                        </a>
                       </div>
                       <div className="study-card">
                         <div className="study-finding positive">Causal</div>
@@ -291,6 +306,9 @@ function App() {
                         <p className="study-impact">
                           <strong>Impact:</strong> Opened a new therapeutic avenue: anti-inflammatory drugs for heart disease.
                         </p>
+                        <a href="https://doi.org/10.1016/S0140-6736(12)60110-X" target="_blank" rel="noopener noreferrer" className="study-link">
+                          Read paper →
+                        </a>
                       </div>
                     </div>
                   </div>

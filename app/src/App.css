@@ -958,6 +958,21 @@ body {
   color: var(--blue-600);
 }
 
+.study-link {
+  display: inline-block;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--blue-600);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.study-link:hover {
+  color: var(--blue-700);
+  text-decoration: underline;
+}
+
 /* Methods Summary Table */
 .methods-summary {
   margin-bottom: 2rem;
