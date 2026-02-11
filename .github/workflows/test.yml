@@ -16,28 +16,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+        run: uv sync --extra dev
 
       - name: Lint with ruff
         run: |
-          ruff check src tests
-          ruff format --check src tests
+          uv run ruff check src tests
+          uv run ruff format --check src tests
 
       - name: Type check with mypy
-        run: |
-          mypy src/pymr
+        run: uv run mypy src/pymr
 
       - name: Run tests
-        run: |
-          pytest --cov=src/pymr --cov-report=xml
+        run: uv run pytest --cov=src/pymr --cov-report=xml
 
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.11'
@@ -51,18 +47,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
         with:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: |
-          pip install -e ".[docs]"
+        run: uv sync --extra docs
 
       - name: Build documentation
-        run: |
-          jupyter-book build docs
+        run: uv run jupyter-book build docs
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

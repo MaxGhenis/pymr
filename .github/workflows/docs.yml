@@ -21,19 +21,17 @@ jobs:
       - uses: actions/checkout@v4
 
       # Build Jupyter Book docs
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
         with:
           python-version: "3.11"
 
       - name: Install Python dependencies
         run: |
-          pip install "jupyter-book<2" myst-nb sphinx-book-theme
-          pip install -e .
+          uv sync --extra docs
 
       - name: Build book
-        run: |
-          jupyter-book build docs/
+        run: uv run jupyter-book build docs/
 
       # Build React app
       - name: Setup Bun
